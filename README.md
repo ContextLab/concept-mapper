@@ -103,3 +103,7 @@ Everything is in `index.html`: markup, styles, and script. There is nothing to i
 The site is served by GitHub Pages from the root of the `main` branch.
 
 The app has been exercised with Playwright in Chromium at desktop size and with touch emulation at phone size. It has not been tested on physical iOS or Android devices, or in Firefox or Safari.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
