@@ -169,6 +169,31 @@ select.inp{cursor:pointer}
 .sprow select{width:44%;flex:none}
 .sheet textarea{margin-bottom:4px}
 
+/* direct manipulation: link handle, inline editor, marquee, selection bar, context menu */
+.lh{cursor:crosshair}
+.lh circle{fill:var(--accent);stroke:var(--canvas);stroke-width:2.5;transition:r .12s}
+.lh:hover circle{r:12}
+.lh path{stroke:var(--accent-ink);stroke-width:2;stroke-linecap:round;fill:none;pointer-events:none}
+.ie{position:absolute;transform:translate(-50%,-50%);z-index:6;min-width:130px;max-width:260px;text-align:center;font:600 14px var(--font);padding:7px 10px;border:2px solid var(--accent);border-radius:10px;background:var(--surface);color:var(--ink);outline:none;box-shadow:var(--shadow)}
+.marq{position:absolute;border:1.5px dashed var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);border-radius:4px;pointer-events:none;z-index:3}
+.selbar{position:absolute;top:12px;left:50%;transform:translateX(-50%);display:flex;align-items:center;gap:4px;background:var(--ink);color:var(--canvas);padding:5px 6px 5px 14px;border-radius:99px;box-shadow:var(--shadow);font-size:13px;white-space:nowrap;max-width:calc(100% - 20px);overflow-x:auto;z-index:3;animation:risec .2s ease}
+.selbar b{margin-right:6px}
+.selbar button{color:inherit;font-weight:600;padding:6px 11px;border-radius:99px;transition:background .12s}
+.selbar button:hover{background:color-mix(in srgb,var(--canvas) 18%,transparent)}
+.selbar button.x{padding:6px 9px;opacity:.75}
+.zoom .icon[aria-pressed=true]{background:var(--accent);color:var(--accent-ink)}
+#ctx{right:auto;top:0;left:0;min-width:210px;z-index:40;max-height:calc(100dvh - 16px);overflow:auto}
+#ctx hr{border:0;border-top:1px solid var(--line);margin:5px 4px}
+#ctx kbd{margin-left:auto;font:500 11px var(--font);color:var(--muted)}
+#ctx button.danger{color:var(--danger)}
+.textbtn{color:var(--accent);font-weight:600;font-size:12.5px;padding:2px 0;margin:-6px 0 12px;display:inline-block}
+.textbtn:hover{text-decoration:underline}
+.sug{display:flex;align-items:center;gap:6px;padding:6px 4px 6px 10px;border:1px dashed var(--line);border-radius:10px;margin-bottom:6px;font-size:13px}
+.sug .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sug .btn{padding:4px 10px;font-size:12px}
+.sug .icon{width:28px;height:28px;color:var(--muted)}
+pre.syntax{background:var(--surface2);border-radius:9px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0 0 12px;white-space:pre-wrap;color:var(--ink)}
+
 /* ---------- panel pieces ---------- */
 .addrow{display:flex;gap:8px;margin-bottom:12px}
 .inp,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 11px;outline:none;transition:border-color .15s,box-shadow .15s;min-width:0}
@@ -331,11 +356,15 @@ h3.sec{font-family:var(--serif);font-size:16px;margin:16px 0 4px;font-weight:600
 <main>
   <div class="stage" id="stage">
     <svg id="svg" aria-label="Concept map canvas">
-      <g id="vp"><g id="gGroups"></g><g id="gEdges"></g><path class="temp" id="temp" hidden></path><g id="gNodes"></g></g>
+      <g id="vp"><g id="gGroups"></g><g id="gEdges"></g><path class="temp" id="temp" style="display:none"></path><g id="gNodes"></g><g class="lh" id="lh" style="display:none" data-tip="Drag to another concept to link them — or to empty space to add a linked concept"><circle r="10"/><path d="M-4.5 0h9M0-4.5v9"/></g></g>
     </svg>
     <div class="hint" id="hint" hidden></div>
+    <div class="selbar" id="selbar" hidden></div>
+    <div class="marq" id="marq" hidden></div>
+    <input class="ie" id="ie" maxlength="80" autocomplete="off" hidden>
     <div class="empty" id="empty" hidden></div>
     <div class="zoom">
+      <button class="icon" data-act="selmode" aria-pressed="false" data-tip="Select several: tap concepts or drag a box (desktop: Shift-click, Shift-drag)" aria-label="Select several"></button>
       <button class="icon" data-act="zin" data-tip="Zoom in" aria-label="Zoom in"></button>
       <button class="icon" data-act="zout" data-tip="Zoom out" aria-label="Zoom out"></button>
       <button class="icon" data-act="fit" data-tip="Fit map to screen" aria-label="Fit to screen"></button>
@@ -351,6 +380,7 @@ h3.sec{font-family:var(--serif);font-size:16px;margin:16px 0 4px;font-weight:600
 <div id="toast" role="status"><span></span><button hidden></button></div>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet" role="dialog" aria-modal="true"></div></div>
 <div class="menu" id="menu" hidden></div>
+<div class="menu" id="ctx" hidden></div>
 <div class="drop" id="drop" hidden>Drop JSON map files to load</div>
 <input type="file" id="fileOpen" accept=".json,application/json" hidden>
 <input type="file" id="fileCmp" accept=".json,application/json" multiple hidden>
@@ -365,7 +395,12 @@ h3.sec{font-family:var(--serif);font-size:16px;margin:16px 0 4px;font-weight:600
 
 /* ---------- constants ---------- */
 const PALETTE=['#E4572E','#F3A712','#A8C256','#2E9E7B','#29A0C4','#3D5A98','#7B5EA7','#D1559A','#8D6E63','#4A5560','#F4F1EA'];
-const MAP_COLORS=['#29A0C4','#E4572E','#7B5EA7','#2E9E7B','#F3A712','#D1559A','#3D5A98','#8D6E63'];
+/* One color per loaded map. Both sets pass the colorblind-separation checks against their surface;
+   the dark set is selected, not derived. Maps keep their slot, so colors follow the map. */
+const MAP_LIGHT=['#2590B8','#E4572E','#7B5EA7','#2E9E7B','#C58A12','#D1559A','#A65A3A','#3D5A98'];
+const MAP_DARK=['#3498BE','#E0603A','#8F78C2','#36A583','#B58214','#D464A4','#A8603C','#5B7BC0'];
+const isDark=()=>document.documentElement.dataset.theme==='dark';
+const mapColor=ci=>(isDark()?MAP_DARK:MAP_LIGHT)[ci%MAP_LIGHT.length];
 const SHAPES=['circle','square','diamond','hexagon','pill','triangle'];
 const SHAPE_NAMES={circle:'Circle',square:'Square',diamond:'Diamond',hexagon:'Hexagon',pill:'Pill',triangle:'Triangle'};
 const STORE='conceptMapper.v1';
@@ -382,6 +417,10 @@ const P={
   eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 100-6 3 3 0 000 6z',
   swap:'M7 7h13m0 0l-3-3m3 3l-3 3M17 17H4m0 0l3 3m-3-3l3-3',
   fit:'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+  select:'M4 4h3M10.5 4h3M17 4h3v3M20 10.5v3M20 17v3h-3M13.5 20h-3M7 20H4v-3M4 13.5v-3M4 7V4',
+  link:'M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1',
+  list:'M9 6h11M9 12h11M9 18h11M4.5 6h.01M4.5 12h.01M4.5 18h.01',
+  chart:'M4 20V10M10 20V4M16 20v-7M22 20H2',
   file:'M6 3h8l4 4v14H6zM14 3v4h4M12 11v6M9 14h6',
   edit:'M4 20h4L19 9l-4-4L4 16zM13 7l4 4'
 };
@@ -453,10 +492,10 @@ function md(src){
 /* ---------- state ---------- */
 const S={
   map:{name:'',nodes:[],edges:[]},
-  mode:'concepts', sel:null, pending:null, styleOpen:false, noteTab:'write',
+  mode:'concepts', sel:null, multi:new Set(), selectMode:false, pending:null, styleOpen:false, noteTab:'write',
   newStyle:{color:PALETTE[4],shape:'circle'},
   /* compare-only reconciliation: alias = concepts declared equivalent, split = concepts kept apart per map */
-  cmp:{maps:[],filter:'all',focus:null,sel:null,alias:new Map(),aliasLabel:new Map(),split:new Set(),collapsed:new Set(),union:{nodes:[],edges:[],byKey:new Map()}}
+  cmp:{maps:[],filter:'all',focus:null,sel:null,multi:new Set(),dismissed:new Set(),suggest:[],view:'map',metric:'concept',pair:null,showAll:false,alias:new Map(),aliasLabel:new Map(),split:new Set(),collapsed:new Set(),union:{nodes:[],edges:[],byKey:new Map()}}
 };
 let nodeIdx=new Map();
 const nodeById=id=>nodeIdx.get(id);
@@ -516,7 +555,7 @@ function restore(str){
   // normalizeMap regenerates edge ids; that's fine since selection is cleared
   m.nodes.forEach(n=>{const p=pos.get(n.id);if(p){n.x=p.x;n.y=p.y;}});
   placeMissing(m.nodes);
-  S.map=m;S.sel=null;S.pending=null;
+  S.map=m;clearSel();
   $('#mapName').value=m.name;
   refresh(true);saveLocal();updateActions();
 }
@@ -572,6 +611,7 @@ const NS='http://www.w3.org/2000/svg';
 const G={nodes:[],groups:[],edges:[],byId:new Map()};
 const nodeEls=new Map(),edgeEls=new Map(),groupEls=new Map();
 const view={x:0,y:0,k:1};let W=0,H=0;
+const lhEl=$('#lh'),IE={el:$('#ie'),active:null};
 let mouseW=null;
 
 function applyView(){
@@ -579,6 +619,7 @@ function applyView(){
   const g=24*view.k;
   stage.style.backgroundSize=`${g}px ${g}px`;
   stage.style.backgroundPosition=`${W/2+view.x}px ${H/2+view.y}px`;
+  placeIE();
 }
 function toWorld(cx,cy){const r=svg.getBoundingClientRect();return{x:(cx-r.left-W/2-view.x)/view.k,y:(cy-r.top-H/2-view.y)/view.k};}
 function zoomAt(px,py,k){ // px,py relative to canvas centre
@@ -633,14 +674,17 @@ function updateGroups(){
   const ext=k=>k._grp?k.geo.rad+15:k.geo.ext;
   for(let i=G.groups.length-1;i>=0;i--){
     const g=G.groups[i];let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
-    for(const k of g._kids){const e=ext(k);x0=Math.min(x0,k.x-e);x1=Math.max(x1,k.x+e);y0=Math.min(y0,k.y-e);y1=Math.max(y1,k.y+e);}
+    // a concept being dragged does not stretch its group, so it can be pulled out; the group holds its shape meanwhile
+    const kids=g._kids.some(k=>k._dragTop)?g._kids.filter(k=>!k._dragTop):g._kids;
+    if(!kids.length){if(g.geo)continue;kids.push(...g._kids);}
+    for(const k of kids){const e=ext(k);x0=Math.min(x0,k.x-e);x1=Math.max(x1,k.x+e);y0=Math.min(y0,k.y-e);y1=Math.max(y1,k.y+e);}
     let cx=(x0+x1)/2,cy=(y0+y1)/2,r=0;
     for(let it=1;it<=12;it++){ // tighten toward the smallest enclosing circle: step toward the farthest rim point
-      let far=g._kids[0],fd=-1;for(const k of g._kids){const d=Math.hypot(k.x-cx,k.y-cy)+ext(k);if(d>fd){fd=d;far=k;}}
+      let far=kids[0],fd=-1;for(const k of kids){const d=Math.hypot(k.x-cx,k.y-cy)+ext(k);if(d>fd){fd=d;far=k;}}
       const d=Math.hypot(far.x-cx,far.y-cy)||1,e=ext(far),px=far.x+(far.x-cx)/d*e,py=far.y+(far.y-cy)/d*e;
       cx+=(px-cx)/(it+1);cy+=(py-cy)/(it+1);
     }
-    for(const k of g._kids)r=Math.max(r,Math.hypot(k.x-cx,k.y-cy)+ext(k));
+    for(const k of kids)r=Math.max(r,Math.hypot(k.x-cx,k.y-cy)+ext(k));
     r+=8;g.x=cx;g.y=cy;g.r=r;g.geo={rad:r,cr:r,ext:r+20};
   }
 }
@@ -720,8 +764,11 @@ function positions(){
     o.tx.setAttribute('visibility','visible');o.tx.setAttribute('x',mx.toFixed(1));o.tx.setAttribute('y',(my+4).toFixed(1));
     o.en.setAttribute('visibility','visible');o.en.setAttribute('transform',`translate(${(mx+(e._lw?e._lw/2+11:0)).toFixed(1)},${my.toFixed(1)})`);
   }
-  const p=S.mode==='links'&&S.pending&&nodeById(S.pending);
-  if(p&&mouseW){temp.hidden=false;temp.setAttribute('d',`M${p.x},${p.y}L${mouseW.x},${mouseW.y}`);}else temp.hidden=true;
+  const lk=gest&&gest.type==='link'&&gest.moved?gest:null,p=lk?lk.src:S.mode==='links'&&S.pending&&nodeById(S.pending),q=lk?lk.w:mouseW;
+  if(p&&q){temp.style.display='';temp.setAttribute('d',`M${p.x},${p.y}L${q.x},${q.y}`);}else temp.style.display='none';
+  const hn=S.mode!=='compare'&&!S.multi.size&&S.sel&&S.sel.type==='node'&&!gest&&!IE.active?nodeById(S.sel.id):null;
+  if(hn&&hn._vis){lhEl.style.display='';lhEl.setAttribute('transform',`translate(${(hn.x+(hn._grp?hn.r:boundary(hn,1,0))+15).toFixed(1)},${hn.y.toFixed(1)})`);}else lhEl.style.display='none';
+  placeIE();
 }
 
 /* ---------- force simulation (springs + repulsion + gravity + collision) ---------- */
@@ -781,44 +828,64 @@ const sim={alpha:0,target:0,raf:0,
 };
 
 /* ---------- pointer input: drag nodes, pan, pinch, click ---------- */
-const pts=new Map();let gest=null,lastBg={t:0,x:0,y:0},lastNode={t:0,id:''};
-/* While dragging a concept, hovering it over another for a moment offers to nest it there. */
-function dropCandidate(w,n){
+const pts=new Map();let gest=null,lastBg={t:0,x:0,y:0},lastNode={t:0,id:''},lastEdge={t:0,id:''};
+/* What is under the pointer, ignoring whatever is being dragged (and its contents). Deepest wins. */
+function dropCandidate(w,drag){
   let best=null;
   for(const b of [...G.groups,...G.nodes]){
-    if(b===n||b._anc.has(n)||n._anc.has(b))continue; // not itself, its own contents, or a group it is already in
+    if(drag.some(n=>b===n||b._anc.has(n)))continue;
     if(Math.hypot(w.x-b.x,w.y-b.y)<(b._grp?b.r:b.geo.cr)&&(!best||b._depth>=best._depth))best=b;
   }
   return best;
 }
-function setDrop(g,cand){
-  const el=b=>{const o=nodeEls.get(b.id)||groupEls.get(b.id);return o&&o.g;};
-  if(g.drop&&el(g.drop))el(g.drop).classList.remove('drop');
-  g.drop=cand;
-  if(cand){if(el(cand))el(cand).classList.add('drop');setHint(`Release to nest inside <b>${esc(clip(cand.label||'Untitled',24))}</b>`);}
-  else renderHint();
+function markDrop(b,on){const o=b&&(nodeEls.get(b.id)||groupEls.get(b.id));if(o)o.g.classList.toggle('drop',on);}
+/* Offer what releasing the drag will do. target: a concept = nest (editor) or merge (compare) there,
+   null = move out to the top level, undefined = nothing. */
+function setDrop(g,target){
+  markDrop(g.drop,false);g.drop=target;g.dropSet=target!==undefined;
+  if(!g.dropSet){renderHint();renderSelBar();return;}
+  markDrop(target,true);$('#selbar').hidden=true;$('#hint').style.visibility='';
+  const L=n=>`<b>${esc(clip(n.label||'Untitled',24))}</b>`;
+  setHint(S.mode==='compare'?`Release to merge with ${L(target)} for this comparison`:target?`Release to nest inside ${L(target)}`:`Release to move out of ${L(g.node._p)}`);
 }
 function releaseDrag(g){
-  if(!g||!g.members)return;
-  clearTimeout(g.timer);if(g.drop)setDrop(g,null);
+  if(!g)return;
+  clearTimeout(g.timer);clearTimeout(g.lp);
+  if(g.hov){markDrop(g.hov,false);g.hov=null;}
+  if(!g.members)return;
+  if(g.dropSet)setDrop(g,undefined);
   for(const m of g.members){m.n.fx=m.n.fy=null;m.n._drag=false;}
-  g.node._drag=false;sim.target=0;sim.kick();
+  for(const n of g.nodes)n._drag=n._dragTop=false;
+  sim.target=0;sim.kick();
 }
 svg.addEventListener('pointerdown',e=>{
   if(e.pointerType==='mouse'&&e.button!==0)return;
-  hideTip();closeMenu();
+  hideTip();closeMenu();hideCtx();
+  if(IE.active)endInline(true);
   try{svg.setPointerCapture(e.pointerId);}catch(_){}
   pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
   if(pts.size===2){
-    releaseDrag(gest);
+    releaseDrag(gest);$('#marq').hidden=true;
     const [a,b]=[...pts.values()];
     gest={type:'pinch',d0:Math.hypot(a.x-b.x,a.y-b.y),k0:view.k};return;
   }
   if(pts.size>2)return;
-  const ne=e.target.closest('.node,.group'),ee=e.target.closest('.edge');
-  gest={type:ne?'node':ee?'edge':'bg',id:(ne||ee||{dataset:{}}).dataset.id,sx:e.clientX,sy:e.clientY,moved:false,vx:view.x,vy:view.y};
-  if(ne){const n=G.byId.get(gest.id);if(!n){gest=null;return;}const w=toWorld(e.clientX,e.clientY);
-    gest.node=n;gest.members=(n._grp?n._leaves:[n]).map(m=>({n:m,ox:w.x-m.x,oy:w.y-m.y}));} // dragging a group moves everything inside it
+  const lh=e.target.closest('.lh'),ne=e.target.closest('.node,.group'),ee=e.target.closest('.edge'),w=toWorld(e.clientX,e.clientY);
+  const mod=e.shiftKey||e.ctrlKey||e.metaKey||S.selectMode;
+  const g=gest={type:lh?'link':ne?'node':ee?'edge':'bg',id:(ne||ee||{dataset:{}}).dataset.id,sx:e.clientX,sy:e.clientY,moved:false,vx:view.x,vy:view.y,mod,w};
+  if(lh){g.src=S.sel&&nodeById(S.sel.id);if(!g.src)gest=null;return;}
+  if(ne){
+    const n=G.byId.get(g.id);if(!n){gest=null;return;}
+    if(e.altKey&&S.mode!=='compare'){g.type='link';g.src=n;return;} // Alt-drag from any concept draws a link
+    g.node=n;
+    // dragging one of several selected concepts moves them all; dragging a group moves everything inside it
+    g.nodes=S.mode!=='compare'&&S.multi.size>1&&S.multi.has(n.id)?[...new Set(selNodes().map(x=>x._rep).filter(Boolean))]:[n];
+    const leaves=new Set();g.nodes.forEach(b=>(b._grp?b._leaves:[b]).forEach(l=>leaves.add(l)));
+    g.members=[...leaves].map(m=>({n:m,ox:w.x-m.x,oy:w.y-m.y}));
+  }
+  else if(!ee&&mod)g.type='marq';
+  if(e.pointerType!=='mouse'){const x=e.clientX,y=e.clientY; // long-press opens the context menu on touch
+    g.lp=setTimeout(()=>{if(gest===g&&!g.moved){releaseDrag(g);gest=null;openCtx(g.type==='node'||g.type==='edge'?g.type:'bg',g.id,x,y,w);}},560);}
 });
 svg.addEventListener('pointermove',e=>{
   if(e.pointerType==='mouse'){mouseW=toWorld(e.clientX,e.clientY);if(S.pending&&!sim.raf)positions();}
@@ -832,20 +899,26 @@ svg.addEventListener('pointermove',e=>{
     view.x+=(e.clientX-prev.x)/2;view.y+=(e.clientY-prev.y)/2;
     zoomAt(mx,my,gest.k0*Math.hypot(a.x-b.x,a.y-b.y)/gest.d0);return;
   }
-  const dx=e.clientX-gest.sx,dy=e.clientY-gest.sy;
-  if(!gest.moved&&Math.hypot(dx,dy)>(e.pointerType==='mouse'?4:9)){gest.moved=true;if(gest.type!=='node')svg.classList.add('panning');}
-  if(!gest.moved)return;
-  if(gest.type==='node'){
-    const w=toWorld(e.clientX,e.clientY),g=gest;
+  const dx=e.clientX-gest.sx,dy=e.clientY-gest.sy,g=gest;
+  if(!g.moved&&Math.hypot(dx,dy)>(e.pointerType==='mouse'?4:9)){g.moved=true;clearTimeout(g.lp);if(g.type==='bg')svg.classList.add('panning');}
+  if(!g.moved)return;
+  const w=toWorld(e.clientX,e.clientY);
+  if(g.type==='node'){
     for(const m of g.members){m.n.fx=w.x-m.ox;m.n.fy=w.y-m.oy;m.n._drag=true;}
-    g.node._drag=true;sim.target=.3;sim.kick();
-    if(S.mode==='concepts'){
-      const c=dropCandidate(w,g.node);
-      if(c!==g.cand){g.cand=c;clearTimeout(g.timer);if(g.drop)setDrop(g,null);
-        if(c)g.timer=setTimeout(()=>{if(gest===g)setDrop(g,c);},550);}
-    }
+    for(const n of g.nodes)n._drag=n._dragTop=true;
+    sim.target=.3;sim.kick();
+    let prop;
+    if(S.mode==='compare'){const c=dropCandidate(w,g.nodes);prop=c&&!c.split&&!g.node.split&&!g.node._anc.has(c)?c:undefined;}
+    else if(S.mode==='concepts'){const c=dropCandidate(w,g.nodes),cur=g.node._p||null;prop=c===cur?undefined:c;}
+    if(prop!==g.cand){g.cand=prop;clearTimeout(g.timer);if(g.dropSet)setDrop(g,undefined);
+      if(prop!==undefined)g.timer=setTimeout(()=>{if(gest===g)setDrop(g,prop);},420);} // a short pause, so rearranging does not nest by accident
   }
-  else{cancelAnimationFrame(tween);view.x=gest.vx+dx;view.y=gest.vy+dy;applyView();}
+  else if(g.type==='link'){g.w=w;const c=dropCandidate(w,[g.src]);if(c!==g.hov){markDrop(g.hov,false);g.hov=c;markDrop(c,true);}if(!sim.raf)positions();}
+  else if(g.type==='marq'){
+    const r=stage.getBoundingClientRect(),m=$('#marq'),x0=Math.min(g.sx,e.clientX)-r.left,y0=Math.min(g.sy,e.clientY)-r.top,x1=Math.max(g.sx,e.clientX)-r.left,y1=Math.max(g.sy,e.clientY)-r.top;
+    m.hidden=false;m.style.cssText=`left:${x0}px;top:${y0}px;width:${x1-x0}px;height:${y1-y0}px`;g.rect=[x0,y0,x1,y1];
+  }
+  else if(g.type==='bg'){cancelAnimationFrame(tween);view.x=g.vx+dx;view.y=g.vy+dy;applyView();}
 });
 function pointerEnd(e,cancel){
   if(!pts.has(e.pointerId))return;
@@ -853,15 +926,24 @@ function pointerEnd(e,cancel){
   const g=gest;if(!g)return;
   if(g.type==='pinch'){if(pts.size<2)gest=null;return;}
   gest=null;
-  const drop=g.drop;releaseDrag(g);
-  if(cancel)return;
-  if(g.moved){if(drop&&g.type==='node')setParent(g.node,drop);return;}
+  const drop=g.drop,had=g.dropSet;releaseDrag(g);$('#marq').hidden=true;
+  if(cancel){positions();return;}
+  if(g.type==='link'){finishLink(g,e);return;}
+  if(g.type==='marq'&&g.moved){finishMarquee(g);return;}
+  if(g.moved){
+    if(had&&g.type==='node'){if(S.mode==='compare')cmpAliasMerge(drop,[g.node.base],drop.label);else setParentMany(g.nodes,drop);}
+    return;
+  }
   const now=performance.now();
   if(g.type==='node'){
+    if(g.mod){if(S.mode==='compare')toggleCmpMulti(g.id);else{toggleMulti(g.id);refresh();}return;}
     if(lastNode.id===g.id&&now-lastNode.t<380){lastNode.t=0;onNodeDbl(g.id);}
     else{lastNode={id:g.id,t:now};onNodeClick(g.id);}
   }
-  else if(g.type==='edge')onEdgeClick(g.id);
+  else if(g.type==='edge'){
+    if(lastEdge.id===g.id&&now-lastEdge.t<380&&S.mode!=='compare'){lastEdge.t=0;const ed=S.map.edges.find(x=>x.id===g.id);if(ed)editEdgeInline(ed);}
+    else{lastEdge={id:g.id,t:now};onEdgeClick(g.id);}
+  }
   else{
     const dbl=now-lastBg.t<380&&Math.hypot(e.clientX-lastBg.x,e.clientY-lastBg.y)<28;
     lastBg={t:dbl?0:now,x:e.clientX,y:e.clientY};
@@ -870,6 +952,11 @@ function pointerEnd(e,cancel){
 }
 svg.addEventListener('pointerup',e=>pointerEnd(e,false));
 svg.addEventListener('pointercancel',e=>pointerEnd(e,true));
+svg.addEventListener('contextmenu',e=>{
+  e.preventDefault();
+  const ne=e.target.closest('.node,.group'),ee=e.target.closest('.edge');
+  openCtx(ne?'node':ee?'edge':'bg',(ne||ee||{dataset:{}}).dataset.id,e.clientX,e.clientY,toWorld(e.clientX,e.clientY));
+});
 svg.addEventListener('pointerleave',()=>{mouseW=null;if(S.pending)positions();});
 svg.addEventListener('wheel',e=>{
   e.preventDefault();cancelAnimationFrame(tween);
@@ -882,8 +969,19 @@ new ResizeObserver(()=>{const r=stage.getBoundingClientRect();W=r.width;H=r.heig
    EDITOR
    ===================================================================== */
 const isInside=(n,anc)=>{for(let p=n.parent&&nodeById(n.parent),i=0;p&&i<9999;p=p.parent&&nodeById(p.parent),i++)if(p===anc)return true;return false;};
+const isSelNode=id=>S.multi.has(id)||!!(S.sel&&S.sel.type==='node'&&S.sel.id===id);
+const selNodes=()=>(S.multi.size?[...S.multi]:S.sel&&S.sel.type==='node'?[S.sel.id]:[]).map(nodeById).filter(Boolean);
+const topMost=ns=>ns.filter(n=>!ns.some(o=>o!==n&&isInside(n,o)));
+function clearSel(){S.sel=null;S.multi.clear();S.pending=null;}
+/* Shift/Ctrl-click (or the select toggle): add or remove one concept from the selection. */
+function toggleMulti(id){
+  if(!S.multi.size&&S.sel&&S.sel.type==='node')S.multi.add(S.sel.id);
+  S.sel=null;S.pending=null;
+  S.multi.has(id)?S.multi.delete(id):S.multi.add(id);
+  if(S.multi.size===1){const only=[...S.multi][0];setSel({type:'node',id:only});}
+}
 function setSel(sel){
-  S.sel=sel;const o=sel&&(sel.type==='node'?nodeById(sel.id):S.map.edges.find(e=>e.id===sel.id));
+  S.multi.clear();S.sel=sel;const o=sel&&(sel.type==='node'?nodeById(sel.id):S.map.edges.find(e=>e.id===sel.id));
   S.noteTab=o&&o.notes?'preview':'write';
 }
 const badgeSVG=n=>{const b=boundary(n,.7071,.7071)-2,x=(b*.7071).toFixed(1),y=b*.7071;return `<circle class="badge" cx="${x}" cy="${y.toFixed(1)}" r="9"/><text class="badget" x="${x}" y="${(y+3.3).toFixed(1)}">${descendants(n).length}</text>`;};
@@ -891,16 +989,16 @@ function styleEditorNode(n){
   n.lines=wrap(n.label);
   const w=Math.max(...n.lines.map(tw)),h=n.lines.length*LH,r=Math.max(24,Math.hypot(w/2,h/2)+8);
   n.geo=geoFor(n.shape,r,w/2,h/2);n.r=n.geo.cr;
-  const sel=S.sel&&S.sel.type==='node'&&S.sel.id===n.id,pen=S.pending===n.id&&S.mode==='links',stacked=n._kids.length>0;
+  const sel=isSelNode(n.id),pen=S.pending===n.id&&S.mode==='links',stacked=n._kids.length>0;
   n.cls=(sel?'sel ':'')+(pen?'pending':'');
-  n.tipmd=n.notes||'';n.tip=stacked?'Collapsed group — double-click to expand':'';
+  n.tipmd=n.notes||'';n.tip=stacked?'Collapsed group — double-click to expand':'';n.vtip=!n.notes&&n.lines.length&&clip(n.label,200)!==n.lines.join(' ')?n.label:'';if(n.vtip&&!n.tip)n.tip=n.vtip;
   let extra='';
   if(n.notes){const b=boundary(n,.7071,-.7071)-2,x=(b*.7071).toFixed(1),y=(-b*.7071).toFixed(1);extra=`<circle class="note" cx="${x}" cy="${y}" r="6"/><circle class="notedot" cx="${x}" cy="${y}" r="2"/>`;}
   if(stacked)extra+=badgeSVG(n);
   n.html=`<path class="halo" d="${n.geo.d}"/>${stacked?`<path d="${n.geo.d}" transform="translate(4,5)" fill="${n.color}" opacity=".4"/>`:''}<path class="shape" d="${n.geo.d}" fill="${n.color}"/>${textSVG(n.lines,inkFor(n.color),n.geo.ty)}${extra}`;
 }
 function styleEditorGroup(n){
-  const sel=S.sel&&S.sel.type==='node'&&S.sel.id===n.id,pen=S.pending===n.id&&S.mode==='links';
+  const sel=isSelNode(n.id),pen=S.pending===n.id&&S.mode==='links';
   n.cls=(sel?'sel ':'')+(pen?'pending':'');n.gcolor=n.color;n.glabel=clip(n.label||'Untitled',36);
   n.tipmd=n.notes||'';n.tip='Group — double-click to collapse';
 }
@@ -926,20 +1024,166 @@ function addConcept(label,at,parent){
   if(parent)parent.collapsed=false;
   S.map.nodes.push(n);nodeIdx.set(n.id,n);commit();allowAutoFit();return n;
 }
-/* Nest n inside p (or move it to the top level when p is null). Any depth is allowed. */
+/* Nest concepts inside p (or move them to the top level when p is null). Any depth is allowed. */
+function setParentMany(ns,p){
+  ns=topMost(ns).filter(n=>n!==p&&!(p&&isInside(p,n))&&(n.parent||null)!==(p?p.id:null));
+  if(!ns.length){refresh();return;}
+  ns.forEach(n=>n.parent=p?p.id:null);if(p)p.collapsed=false;
+  commit();refresh(true,.5);allowAutoFit();
+  const what=ns.length===1?`“${clip(ns[0].label||'concept',22)}”`:`${ns.length} concepts`;
+  toast(p?`Nested ${what} inside “${clip(p.label||'concept',22)}”`:`Moved ${what} to the top level`,'Undo',undo);
+}
 function setParent(n,p){
   if(p&&(p===n||isInside(p,n))){toast('A concept cannot be nested inside itself');refresh();return;}
-  if((n.parent||null)===(p?p.id:null))return;
-  n.parent=p?p.id:null;if(p)p.collapsed=false;
-  commit();refresh(true,.5);allowAutoFit();
-  toast(p?`Nested “${clip(n.label||'concept',22)}” inside “${clip(p.label||'concept',22)}”`:`Moved “${clip(n.label||'concept',26)}” to the top level`,'Undo',undo);
+  setParentMany([n],p);
+}
+function deleteNodes(ns){
+  const ids=new Set(ns.map(n=>n.id));if(!ids.size)return;
+  for(const k of S.map.nodes){if(ids.has(k.id))continue;let q=k.parent;while(q&&ids.has(q))q=(nodeById(q)||{}).parent||null;k.parent=q||null;} // survivors move up
+  S.map.nodes=S.map.nodes.filter(x=>!ids.has(x.id));
+  S.map.edges=S.map.edges.filter(e=>!ids.has(e.source)&&!ids.has(e.target));
+  clearSel();commit();refresh(true);toast(`Deleted ${ids.size} concepts`,'Undo',undo);
+}
+const freshLabel=()=>{let i=1,l='New concept';while(S.map.nodes.some(n=>norm(n.label)===norm(l)))l='New concept '+(++i);return l;};
+/* Link two concepts. Returns the new link, the existing one if they are already linked, or null if not allowed. */
+function makeLink(a,b){
+  if(!a||!b||a===b)return null;
+  if(isInside(a,b)||isInside(b,a)){toast('One of these is nested inside the other — nesting already connects them');return null;}
+  const ex=S.map.edges.find(e=>(e.source===a.id&&e.target===b.id)||(e.source===b.id&&e.target===a.id));
+  if(ex)return ex;
+  const e={id:uid('e'),source:a.id,target:b.id,label:'',notes:'',directed:true};S.map.edges.push(e);commit();return e;
+}
+async function groupSelected(){
+  const ns=topMost(selNodes());if(!ns.length)return;
+  const name=await askText({title:ns.length>1?`Group ${ns.length} concepts`:'Group this concept',msg:'Name the new concept that will contain the selection.',ok:'Group',
+    check:v=>S.map.nodes.some(o=>norm(o.label)===norm(v))?'That concept already exists — use “Nest all inside” in the panel to put them in it.':''});
+  if(name==null)return;
+  const par=ns.every(n=>(n.parent||null)===(ns[0].parent||null))?ns[0].parent||null:null;
+  const g={id:uid('n'),label:name,notes:'',color:S.newStyle.color,shape:S.newStyle.shape,parent:par,collapsed:false,
+    x:ns.reduce((a,n)=>a+n.x,0)/ns.length,y:ns.reduce((a,n)=>a+n.y,0)/ns.length,vx:0,vy:0};
+  S.map.nodes.push(g);nodeIdx.set(g.id,g);ns.forEach(n=>n.parent=g.id);setSel({type:'node',id:g.id});
+  commit();refresh(true,.5);allowAutoFit();toast(`Grouped inside “${clip(name,26)}”`,'Undo',undo);
+}
+async function mergeSelected(){
+  const ns=selNodes();if(ns.length<2)return;
+  const name=await askText({title:`Merge ${ns.length} concepts`,msg:'Their links, notes and nested concepts are combined into one concept. What should it be called?',value:ns[0].label,ok:'Merge',
+    check:v=>S.map.nodes.some(o=>!ns.includes(o)&&norm(o.label)===norm(v))?'Another concept already has that name.':''});
+  if(name!=null)doMerge(ns[0],ns.slice(1),name);
+}
+/* ----- editing right on the canvas ----- */
+function placeIE(){
+  const a=IE.active;if(!a)return;const p=a.pos();
+  IE.el.style.left=(W/2+view.x+p.x*view.k)+'px';IE.el.style.top=(H/2+view.y+p.y*view.k)+'px';
+}
+function inlineEdit({pos,value,placeholder,done}){
+  endInline(true);
+  IE.active={pos,done};IE.el.value=value;IE.el.placeholder=placeholder||'';IE.el.hidden=false;placeIE();IE.el.focus();IE.el.select();lhEl.style.display='none';
+}
+function endInline(save,via){
+  const a=IE.active;if(!a)return;IE.active=null;IE.el.hidden=true;
+  a.done(save?IE.el.value.trim():null,via);
+}
+IE.el.addEventListener('keydown',e=>{
+  e.stopPropagation();
+  if(e.key==='Enter'){e.preventDefault();endInline(true);}
+  else if(e.key==='Escape'){e.preventDefault();endInline(false);}
+  else if(e.key==='Tab'){e.preventDefault();endInline(true,e.shiftKey?'child':'linked');}
+});
+IE.el.addEventListener('blur',()=>endInline(true));
+function renameInline(n){
+  if(!n._vis)return;
+  inlineEdit({pos:()=>({x:n.x,y:n._grp?n.y-n.r-12:n.y}),value:n.label,placeholder:'Concept name',done:(v,via)=>{
+    if(v&&v!==n.label){n.label=v;commit();}
+    softRefresh();sim.reheat(.1); // soft: the user may have clicked straight into a panel field
+    if(via==='linked')quickAddLinked(n);else if(via==='child')quickAddChild(n);
+  }});
+}
+function editEdgeInline(ed){
+  const s=nodeById(ed.source),t=nodeById(ed.target);if(!s||!t||!s._rep||!t._rep)return;
+  inlineEdit({pos:()=>({x:(s._rep.x+t._rep.x)/2,y:(s._rep.y+t._rep.y)/2}),value:ed.label||'',placeholder:'Label this link…',done:v=>{
+    if(v!=null&&v!==ed.label){ed.label=v;commit();}
+    softRefresh();sim.reheat(.1);
+  }});
+}
+/* Tab: a new concept linked from this one. Shift+Tab: a new concept nested inside it. Both go straight to naming. */
+function quickAddLinked(from){
+  const a=Math.random()*6.283,n=addConcept(freshLabel(),{x:from.x+Math.cos(a)*150,y:from.y+Math.sin(a)*150},from.parent?nodeById(from.parent):null);
+  if(!n)return;
+  makeLink(from,n);if(S.mode==='links')S.mode='concepts';setSel({type:'node',id:n.id});refresh(true);renameInline(n);
+}
+function quickAddChild(p){
+  const n=addConcept(freshLabel(),null,p);if(!n)return;
+  if(S.mode==='links')S.mode='concepts';setSel({type:'node',id:n.id});refresh(true,.4);renameInline(n);
+}
+/* Dragging from the link handle (or Alt-dragging a concept). */
+function finishLink(g,e){
+  const src=g.src;
+  if(!g.moved){S.mode='links';clearSel();S.pending=src.id;refresh();return;} // a plain click on the handle starts click-to-link
+  const w=toWorld(e.clientX,e.clientY),t=dropCandidate(w,[src]);
+  if(t){const ed=makeLink(src,t);if(ed){if(S.mode==='links')setSel({type:'edge',id:ed.id});refresh(true);editEdgeInline(ed);}else refresh();return;}
+  const n=addConcept(freshLabel(),w,src.parent?nodeById(src.parent):null);if(!n){refresh();return;}
+  makeLink(src,n);setSel({type:'node',id:n.id});refresh(true);renameInline(n);
+}
+function finishMarquee(g){
+  const [x0,y0,x1,y1]=g.rect,hit=[...G.nodes,...G.groups].filter(b=>{const x=W/2+view.x+b.x*view.k,y=H/2+view.y+b.y*view.k;return x>=x0&&x<=x1&&y>=y0&&y<=y1;});
+  if(S.mode==='compare'){hit.forEach(b=>S.cmp.multi.add(b.key));S.cmp.sel=null;refresh();return;}
+  if(!S.multi.size&&S.sel&&S.sel.type==='node')S.multi.add(S.sel.id);
+  S.sel=null;S.pending=null;hit.forEach(b=>S.multi.add(b.id));
+  if(S.multi.size===1)setSel({type:'node',id:[...S.multi][0]});
+  refresh();
+}
+/* Quick entry: one concept per line, indentation nests, "A -> B : label" links. */
+function applyBulk(text){
+  let nn=0,ne=0;const stack=[],find=l=>S.map.nodes.find(n=>norm(n.label)===norm(l));
+  const ensure=(label,parent)=>{
+    label=label.trim().slice(0,80);if(!label)return null;
+    let n=find(label);
+    if(!n){const a=Math.random()*6.283,d=40+Math.random()*110,o=parent||{x:0,y:0};
+      n={id:uid('n'),label,notes:'',color:S.newStyle.color,shape:S.newStyle.shape,parent:parent?parent.id:null,collapsed:false,x:o.x+Math.cos(a)*d,y:o.y+Math.sin(a)*d,vx:0,vy:0};
+      S.map.nodes.push(n);nodeIdx.set(n.id,n);nn++;if(parent)parent.collapsed=false;}
+    return n;
+  };
+  for(const raw of String(text).replace(/\r/g,'').split('\n')){
+    if(!raw.trim())continue;
+    const indent=raw.match(/^[ \t]*/)[0].replace(/\t/g,'  ').length;
+    let line=raw.trim().replace(/^([-*+•]|\d+[.)])\s+/,'');
+    if(line.includes('->')){
+      let label='';const c=line.lastIndexOf(':');
+      if(c>line.lastIndexOf('->')){label=line.slice(c+1).trim().slice(0,60);line=line.slice(0,c);}
+      const ns=line.split('->').map(x=>ensure(x,null));
+      for(let i=0;i+1<ns.length;i++){const a=ns[i],b=ns[i+1];
+        if(!a||!b||a===b||isInside(a,b)||isInside(b,a))continue;
+        if(S.map.edges.some(e=>(e.source===a.id&&e.target===b.id)||(e.source===b.id&&e.target===a.id)))continue;
+        S.map.edges.push({id:uid('e'),source:a.id,target:b.id,label,notes:'',directed:true});ne++;}
+    }else{
+      while(stack.length&&stack[stack.length-1].indent>=indent)stack.pop();
+      const n=ensure(line,stack.length?stack[stack.length-1].node:null);
+      if(n)stack.push({indent,node:n});
+    }
+  }
+  if(nn||ne){commit();refresh(true,.7);fitSoon();}
+  toast(nn||ne?`Added ${nn} concept${nn===1?'':'s'}${ne?` and ${ne} link${ne===1?'':'s'}`:''}`:'Nothing new to add',nn||ne?'Undo':undefined,undo);
+}
+function bulkDialog(){
+  const f=openForm(`<form><h2>Quick entry</h2><p>Type or paste a list. One concept per line; indent to nest; use an arrow to link.</p>
+    <pre class="syntax">Memory
+  Long-term memory
+    Episodic
+  Working memory
+Hippocampus -> Episodic : encodes
+Sleep -> Consolidation -> Long-term memory</pre>
+    <textarea id="bulkText" rows="8" placeholder="One concept per line…" style="font:13px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace"></textarea>
+    <div class="foot" style="margin-top:12px"><button type="button" class="btn" data-cancel>Cancel</button><button class="btn primary">Add to map</button></div></form>`);
+  const ta=$('#bulkText');ta.focus();
+  ta.addEventListener('keydown',e=>{if(e.key==='Tab'){e.preventDefault();ta.setRangeText('  ',ta.selectionStart,ta.selectionEnd,'end');}}); // Tab indents instead of leaving the box
+  f.sh.firstElementChild.onsubmit=e=>{e.preventDefault();const v=ta.value;f.finish(true);applyBulk(v);};
 }
 function deleteNode(id){
   const n=nodeById(id);if(!n)return;
   const kids=S.map.nodes.filter(k=>k.parent===id);kids.forEach(k=>k.parent=n.parent||null); // contents move up one level
   S.map.nodes=S.map.nodes.filter(x=>x.id!==id);
   S.map.edges=S.map.edges.filter(e=>e.source!==id&&e.target!==id);
-  if(S.sel&&S.sel.id===id)S.sel=null;if(S.pending===id)S.pending=null;
+  if(S.sel&&S.sel.id===id)S.sel=null;if(S.pending===id)S.pending=null;S.multi.delete(id);
   commit();refresh(true);toast(`Deleted “${clip(n.label||'concept',30)}”${kids.length?' — its contents moved up a level':''}`,'Undo',undo);
 }
 function deleteEdge(id){
@@ -991,23 +1235,28 @@ function doMerge(n,others,label){
   toast(`Merged ${others.length+1} concepts into “${clip(label,24)}”`,'Undo',undo);
 }
 function onNodeClick(id){
-  if(S.mode==='compare'){const i=S.cmp.union.nodes.findIndex(n=>n.id===id);S.cmp.sel=i<0?null:{type:'node',i};refresh();openSheet();return;}
+  if(S.mode==='compare'){const i=S.cmp.union.nodes.findIndex(n=>n.id===id);S.cmp.multi.clear();S.cmp.sel=i<0?null:{type:'node',i};refresh();openSheet();return;}
   if(S.mode==='concepts'){setSel({type:'node',id});refresh();openSheet();$('#pbody').scrollTop=0;return;}
   // links mode
   if(!S.pending){S.pending=id;S.sel=null;refresh();return;}
   if(S.pending===id){S.pending=null;refresh();return;}
-  const a=S.pending,A=nodeById(a),B=nodeById(id);
+  const A=nodeById(S.pending),B=nodeById(id),before=S.map.edges.length;
   S.pending=null;
-  if(A&&B&&(isInside(A,B)||isInside(B,A))){refresh();toast('One of these is nested inside the other — nesting already connects them');return;}
-  const ex=S.map.edges.find(e=>(e.source===a&&e.target===id)||(e.source===id&&e.target===a));
-  if(ex){setSel({type:'edge',id:ex.id});refresh();toast('Those concepts are already linked');}
-  else{const e={id:uid('e'),source:a,target:id,label:'',notes:'',directed:true};S.map.edges.push(e);setSel({type:'edge',id:e.id});commit();refresh(true);}
+  const ed=makeLink(A,B);
+  if(!ed){refresh();return;}
+  setSel({type:'edge',id:ed.id});refresh(S.map.edges.length>before);
+  if(S.map.edges.length===before)toast('Those concepts are already linked');
   openSheet();$('#pbody').scrollTop=0;
-  if(canHover()){const i=$('#edgeLabel');if(i)i.focus();}
+  if(canHover())editEdgeInline(ed); // type the label right where the link is
 }
-/* Double-click a concept that contains others to collapse or expand it. */
+/* Double-click: a concept that contains others collapses or expands; any other concept is renamed in place. */
 function onNodeDbl(id){
-  const n=G.byId.get(id);if(!n||!n._kids.length)return;
+  const n=G.byId.get(id);if(!n)return;
+  if(!n._kids.length){
+    if(S.mode==='compare')return;
+    S.pending=null;if(S.mode==='concepts')setSel({type:'node',id});
+    refresh();renameInline(n);return;
+  }
   toggleCollapse(n);
   if(S.mode==='compare'){n.collapsed?S.cmp.collapsed.add(n.key):S.cmp.collapsed.delete(n.key);}else{S.pending=null;commit();}
   refresh(true,.35);allowAutoFit();
@@ -1018,13 +1267,76 @@ function onEdgeClick(id){
   S.pending=null;setSel({type:'edge',id});refresh();openSheet();$('#pbody').scrollTop=0;
 }
 function onBgClick(dbl){
-  if(S.mode==='compare'){if(S.cmp.sel){S.cmp.sel=null;refresh();}return;}
-  if(dbl&&S.mode==='concepts'){
-    let i=1,label='New concept';while(S.map.nodes.some(n=>norm(n.label)===norm(label)))label='New concept '+(++i);
-    const n=addConcept(label,dbl);if(n){setSel({type:'node',id:n.id});refresh(true);openSheet();const inp=$('#nodeLabel');if(inp&&canHover()){inp.focus();inp.select();}}
+  if(S.mode==='compare'){if(S.cmp.sel||S.cmp.multi.size){S.cmp.sel=null;S.cmp.multi.clear();refresh();}return;}
+  if(dbl&&S.mode==='concepts'){ // double-click empty canvas: new concept, named on the spot
+    const n=addConcept(freshLabel(),dbl);if(n){setSel({type:'node',id:n.id});refresh(true);renameInline(n);}
     return;
   }
-  if(S.sel||S.pending){S.sel=null;S.pending=null;refresh();}
+  if(S.sel||S.pending||S.multi.size){clearSel();refresh();}
+}
+/* ----- context menu (right-click, or long-press on touch) ----- */
+let ctxItems=[];
+function hideCtx(){$('#ctx').hidden=true;}
+function showCtx(x,y,items){
+  const m=$('#ctx');ctxItems=items=items.filter(Boolean);
+  m.innerHTML=items.map((it,i)=>it==='-'?'<hr>':`<button data-ctx="${i}"${it.danger?' class="danger"':''}>${it.icon?ic(it.icon):'<span style="width:18px;flex:none"></span>'}${esc(it.label)}${it.kbd?`<kbd>${it.kbd}</kbd>`:''}</button>`).join('');
+  m.hidden=false;const r=m.getBoundingClientRect();
+  m.style.left=clamp(x,8,innerWidth-r.width-8)+'px';m.style.top=clamp(y,8,innerHeight-r.height-8)+'px';
+}
+function openCtx(type,id,x,y,w){
+  hideTip();
+  if(S.mode==='compare'){
+    const C=S.cmp,u=type==='node'?G.byId.get(id):null;
+    if(!u){showCtx(x,y,[{label:'Fit to screen',icon:'fit',run:fit}]);return;}
+    const many=C.multi.size>1&&C.multi.has(u.key);
+    if(!many){const i=C.union.nodes.indexOf(u);C.multi.clear();C.sel={type:'node',i};refresh();}
+    showCtx(x,y,many?[{label:`Merge ${C.multi.size} for this comparison`,icon:'link',run:cmpMergeSelected},{label:'Clear selection',run:()=>{C.multi.clear();refresh();}}]:[
+      !u.split&&{label:'Merge with…',icon:'link',run:()=>cmpMerge(u)},
+      !u.split&&u.in.size>1&&{label:'Split by map',run:()=>{C.split.add(u.base);rebuildCmp('Now a separate concept in each map');}},
+      u.split&&{label:'Rejoin across maps',run:()=>{C.split.delete(u.base);rebuildCmp('Rejoined across maps');}},
+      u._kids.length&&{label:u.collapsed?'Expand':'Collapse',run:()=>onNodeDbl(u.id)}]);
+    return;
+  }
+  if(type==='node'){
+    const n=nodeById(id);if(!n)return;
+    if(!isSelNode(id)){setSel({type:'node',id});refresh();}
+    const ns=selNodes();
+    if(ns.length>1){showCtx(x,y,[
+      ns.length===2&&{label:'Link these two',icon:'link',run:()=>{const ed=makeLink(ns[0],ns[1]);if(ed){refresh(true);editEdgeInline(ed);}}},
+      {label:`Merge ${ns.length} into one`,run:mergeSelected},{label:`Group ${ns.length} inside a new concept`,kbd:'Ctrl G',run:groupSelected},
+      ns.some(k=>k.parent)&&{label:'Move to top level',run:()=>setParentMany(ns,null)},'-',
+      {label:`Delete ${ns.length} concepts`,icon:'trash',danger:1,kbd:'Del',run:()=>deleteNodes(ns)}]);return;}
+    showCtx(x,y,[
+      {label:'Rename',icon:'edit',kbd:'Enter',run:()=>renameInline(n)},
+      {label:'Add linked concept',icon:'plus',kbd:'Tab',run:()=>quickAddLinked(n)},
+      {label:'Add concept inside',kbd:'⇧ Tab',run:()=>quickAddChild(n)},
+      {label:'Link to…',icon:'link',run:()=>{S.mode='links';clearSel();S.pending=n.id;refresh();}},'-',
+      {label:'Split…',run:()=>splitDialog(n)},{label:'Merge with…',run:()=>mergeDialog(n)},
+      {label:'Group inside a new concept',kbd:'Ctrl G',run:groupSelected},
+      n._kids.length&&{label:n.collapsed?'Expand':'Collapse',run:()=>onNodeDbl(n.id)},
+      n.parent&&{label:'Move to top level',run:()=>setParent(n,null)},'-',
+      {label:'Delete',icon:'trash',danger:1,kbd:'Del',run:()=>deleteNode(n.id)}]);
+    return;
+  }
+  if(type==='edge'){
+    const ed=S.map.edges.find(k=>k.id===id);if(!ed)return;
+    if(S.mode==='concepts')S.mode='links';S.pending=null;setSel({type:'edge',id});refresh();
+    showCtx(x,y,[{label:'Edit label',icon:'edit',kbd:'Enter',run:()=>editEdgeInline(ed)},
+      {label:'Reverse direction',icon:'swap',run:()=>{[ed.source,ed.target]=[ed.target,ed.source];ed.directed=true;commit();refresh();}},
+      {label:ed.directed?'Hide arrow':'Show arrow',run:()=>{ed.directed=!ed.directed;commit();refresh();}},'-',
+      {label:'Delete link',icon:'trash',danger:1,kbd:'Del',run:()=>deleteEdge(id)}]);
+    return;
+  }
+  showCtx(x,y,[{label:'Add concept here',icon:'plus',run:()=>{if(S.mode!=='concepts')S.mode='concepts';const n=addConcept(freshLabel(),w);if(n){setSel({type:'node',id:n.id});refresh(true);renameInline(n);}}},
+    {label:'Quick entry…',icon:'list',run:bulkDialog},
+    S.map.nodes.length&&{label:'Select all',kbd:'Ctrl A',run:selectAll},
+    {label:'Fit to screen',icon:'fit',run:fit}]);
+}
+function selectAll(){
+  if(S.mode==='compare'){S.cmp.sel=null;S.cmp.multi=new Set(G.nodes.concat(G.groups).map(n=>n.key));refresh();return;}
+  S.sel=null;S.pending=null;S.multi=new Set(S.map.nodes.map(n=>n.id));
+  if(S.multi.size===1)setSel({type:'node',id:[...S.multi][0]});
+  refresh();
 }
 function downloadJSON(obj,name){
   const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'}),a=document.createElement('a');
@@ -1040,7 +1352,7 @@ async function downloadMap(){
   downloadJSON(exportMap(),S.map.name);toast('Map downloaded');
 }
 function loadIntoEditor(m,msg){
-  placeMissing(m.nodes);S.map=m;S.sel=null;S.pending=null;$('#mapName').value=m.name;
+  placeMissing(m.nodes);S.map=m;clearSel();$('#mapName').value=m.name;
   if(S.mode==='compare')S.mode='concepts';
   commit();refresh(true,.25);fitSoon();if(msg)toast(msg,'Undo',undo);
 }
@@ -1101,19 +1413,21 @@ function buildUnion(){
   }
   C.union={nodes:[...byKey.values()],edges:[...eKey.values()],byKey};
   if(C.focus!=null&&C.focus>=C.maps.length)C.focus=null;
-  C.sel=null;
+  C.sel=null;C.multi.clear();C.pair=null;C.ver=(C.ver||0)+1;
+  suggestMatches();
 }
 const statusOf=(u,N)=>u.in.size===N?'common':u.in.size===1?'unique':'some';
 const names=u=>[...u.in].map(i=>S.cmp.maps[i].name);
 function edgeLabelMerged(u){return [...new Set(Object.values(u.src).map(s=>s.label).filter(Boolean))].join(' / ');}
 function cmpVisible(){
-  const C=S.cmp,U=C.union,N=C.maps.length,f=N>1?C.filter:'all';
-  let edges=U.edges.filter(e=>f==='all'||(f==='common'?e.in.size===N:e.in.size<N)),nodes;
-  if(f==='all')nodes=U.nodes;
-  else if(f==='common')nodes=U.nodes.filter(n=>n.in.size===N);
+  const C=S.cmp,U=C.union,N=C.maps.length,f=N>1?(C.filter==='major'&&N<3?'all':C.filter):'all';
+  const pass=x=>f==='all'||(f==='common'?x.in.size===N:f==='major'?x.in.size>N/2:x.in.size<N);
+  let edges=U.edges.filter(pass),nodes;
+  if(f!=='diff')nodes=U.nodes.filter(pass);
   else{const keep=new Set(U.nodes.filter(n=>n.in.size<N||n.nestDiff));edges.forEach(e=>{keep.add(e.sN);keep.add(e.tN);});
     for(const n of [...keep])for(let p=n.parentKey&&U.byKey.get(n.parentKey),i=0;p&&i++<999;p=p.parentKey&&U.byKey.get(p.parentKey))keep.add(p); // keep enclosing groups for context
     nodes=U.nodes.filter(n=>keep.has(n));}
+  if(f!=='all'&&f!=='diff'){const ok=new Set(nodes);edges=edges.filter(e=>ok.has(e.sN)&&ok.has(e.tN));}
   return {nodes,edges};
 }
 function buildCompareDisplay(){
@@ -1123,7 +1437,7 @@ function buildCompareDisplay(){
   const inView=new Set(nodes);
   for(const n of nodes){const p=n.parentKey&&U.byKey.get(n.parentKey);n._p=p&&inView.has(p)?p:null;}
   const {leaves,groups}=structure(nodes);
-  const cls=(n,st)=>st+(n===selN?' sel':'')+(C.focus!=null&&!n.in.has(C.focus)?' dim':'');
+  const cls=(n,st)=>st+(n===selN||C.multi.has(n.key)?' sel':'')+(C.focus!=null&&!n.in.has(C.focus)?' dim':'');
   const where=(n,st)=>N>1?(st==='common'?'In all maps':'In: '+names(n).join(', ')):'';
   for(const n of leaves){
     n.lines=wrap(n.label);
@@ -1155,15 +1469,51 @@ function buildCompareDisplay(){
 }
 function rebuildCmp(msg){buildUnion();refresh(true,.5);allowAutoFit();if(msg)toast(msg);}
 /* Treat several concepts as one for this comparison (the loaded files are not changed). */
+function cmpAliasMerge(u,bases,label){
+  const C=S.cmp;
+  for(const b of bases){if(b===u.base)continue;for(const [k,v] of [...C.alias])if(v===b)C.alias.set(k,u.base);C.alias.set(b,u.base);C.aliasLabel.delete(b);}
+  C.aliasLabel.set(u.base,label);
+  rebuildCmp(`Merged into “${clip(label,26)}” for this comparison`);
+}
 async function cmpMerge(u){
   const C=S.cmp,others=C.union.nodes.filter(o=>o!==u&&!o.split);
   if(!others.length){toast('There is nothing else to merge with');return;}
   const r=await pickDialog({title:`Merge with “${clip(u.label,26)}”`,msg:'Tick the concepts that mean the same thing. They are treated as one concept in this comparison; your files are not changed.',
     items:others.map(o=>({id:o.base,label:o.label,sub:C.maps.length>1?names(o).join(', '):''})),label:u.label,labelTitle:'Name of the merged concept',ok:'Merge'});
-  if(!r)return;
-  for(const b of r.ids){for(const [k,v] of [...C.alias])if(v===b)C.alias.set(k,u.base);C.alias.set(b,u.base);C.aliasLabel.delete(b);}
-  C.aliasLabel.set(u.base,r.label);
-  rebuildCmp(`Merged ${r.ids.length+1} concepts for this comparison`);
+  if(r)cmpAliasMerge(u,r.ids,r.label);
+}
+async function cmpMergeSelected(){
+  const C=S.cmp,us=[...C.multi].map(k=>C.union.byKey.get(k)).filter(u=>u&&!u.split);
+  if(us.length<2){toast('Select two or more concepts (ones split by map cannot be merged)');return;}
+  const label=await askText({title:`Merge ${us.length} concepts for this comparison`,msg:'They are treated as one concept here. Your files are not changed.',value:us[0].label,ok:'Merge'});
+  if(label!=null)cmpAliasMerge(us[0],us.slice(1).map(u=>u.base),label);
+}
+function toggleCmpMulti(id){
+  const C=S.cmp,u=G.byId.get(id);if(!u)return;
+  if(!C.multi.size&&C.sel&&C.sel.type==='node'){const p=C.union.nodes[C.sel.i];if(p)C.multi.add(p.key);}
+  C.sel=null;C.multi.has(u.key)?C.multi.delete(u.key):C.multi.add(u.key);refresh();
+}
+/* How alike two labels are, 0–1: ignores case, punctuation and plurals; recognises acronyms. */
+function labelSim(a,b){
+  const words=x=>norm(x).replace(/[^\p{L}\p{N} ]+/gu,' ').split(/\s+/).filter(Boolean).map(w=>w.length>3?w.replace(/(es|s)$/,''):w);
+  const wa=words(a),wb=words(b);if(!wa.length||!wb.length)return 0;
+  const sa=wa.join(''),sb=wb.join('');if(sa===sb)return 1;
+  const acr=w=>w.map(x=>x[0]).join('');
+  if((wa.length===1&&wb.length>1&&sa.length>1&&sa===acr(wb))||(wb.length===1&&wa.length>1&&sb.length>1&&sb===acr(wa)))return .9;
+  let prev=Array.from({length:sb.length+1},(_,i)=>i);
+  for(let i=1;i<=sa.length;i++){const cur=[i];for(let j=1;j<=sb.length;j++)cur[j]=Math.min(prev[j]+1,cur[j-1]+1,prev[j-1]+(sa[i-1]===sb[j-1]?0:1));prev=cur;}
+  const lev=1-prev[sb.length]/Math.max(sa.length,sb.length),A=new Set(wa),B=new Set(wb);let both=0;for(const x of A)if(B.has(x))both++;
+  return Math.max(lev,both/(A.size+B.size-both)*.95);
+}
+/* Concepts from different maps whose labels are nearly the same: probably one idea worded two ways. */
+function suggestMatches(){
+  const C=S.cmp,ns=C.union.nodes.filter(u=>!u.split),out=[];
+  if(C.maps.length>1&&ns.length<=600)for(let i=0;i<ns.length;i++)for(let j=i+1;j<ns.length;j++){
+    const a=ns[i],b=ns[j];if([...a.in].some(m=>b.in.has(m)))continue;
+    const k=a.base<b.base?a.base+'|'+b.base:b.base+'|'+a.base;if(C.dismissed.has(k))continue;
+    const sc=labelSim(a.label,b.label);if(sc>=.72)out.push({a,b,k,sc});
+  }
+  C.suggest=out.sort((x,y)=>y.sc-x.sc).slice(0,8);
 }
 const nameTaken=(n,skip)=>S.cmp.maps.some((m,i)=>i!==skip&&norm(m.name)===norm(n));
 /* Ensures every loaded map has a unique label; returns null if the user skips. */
@@ -1178,8 +1528,9 @@ async function resolveName(name,source){
   return name;
 }
 function addCmpMap(name,m,source){
-  const used=new Set(S.cmp.maps.map(x=>x.color));
-  S.cmp.maps.push({name,source,nodes:m.nodes,edges:m.edges,color:MAP_COLORS.find(c=>!used.has(c))||MAP_COLORS[S.cmp.maps.length%MAP_COLORS.length]});
+  const used=new Set(S.cmp.maps.map(x=>x.ci));let ci=0;while(used.has(ci)&&ci<MAP_LIGHT.length)ci++;
+  if(ci>=MAP_LIGHT.length)ci=S.cmp.maps.length%MAP_LIGHT.length;
+  S.cmp.maps.push({name,source,nodes:m.nodes,edges:m.edges,ci,get color(){return mapColor(this.ci);}});
   buildUnion();refresh(true);fitSoon();
 }
 async function loadCompareFiles(files){
@@ -1199,7 +1550,7 @@ async function addCurrentToCompare(){
 function viewAsMap(){
   const C=S.cmp,{nodes,edges}=cmpVisible(),f=C.maps.length>1?C.filter:'all',ns=C.maps.map(m=>m.name);
   const ids=new Map(nodes.map((u,i)=>[u,'n'+i])),tag=i=>C.maps.length>1?`**${C.maps[i].name}:** `:'';
-  return {name:(f==='common'?'Common: '+ns.join(' ∩ '):f==='diff'?'Differences: '+ns.join(' vs '):ns.length>1?'Merged: '+ns.join(' + '):ns[0]),
+  return {name:(f==='major'?'Majority: '+ns.join(', '):f==='common'?'Common: '+ns.join(' ∩ '):f==='diff'?'Differences: '+ns.join(' vs '):ns.length>1?'Merged: '+ns.join(' + '):ns[0]),
     nodes:nodes.map(u=>{const first=u.src[[...u.in][0]];
       const notes=[...u.in].map(i=>u.src[i].notes?tag(i)+u.src[i].notes:'').filter(Boolean);
       return {id:ids.get(u),label:u.label,notes:[...new Set(notes)].join('\n\n'),color:first.color,shape:first.shape,parent:u._p&&ids.has(u._p)?ids.get(u._p):null,collapsed:!!u.collapsed,x:u.x,y:u.y};}),
@@ -1227,8 +1578,18 @@ function panelConcepts(){
   m.edges.forEach(e=>{deg.set(e.source,(deg.get(e.source)||0)+1);deg.set(e.target,(deg.get(e.target)||0)+1);});
   let h=`<form class="addrow" id="addForm"><input id="addInput" class="inp" placeholder="Add a concept…" autocomplete="off" enterkeyhint="done" maxlength="80" aria-label="New concept label">
     <button type="button" class="stylebtn" data-act="newstyle" aria-expanded="${S.styleOpen}" data-tip="Color and shape for new concepts" aria-label="Style for new concepts">${shapeIcon(S.newStyle.shape,S.newStyle.color,'')}</button>
-    <button class="btn primary" data-tip="Add concept (Enter)">Add</button></form>`;
+    <button class="btn primary" data-tip="Add concept (Enter)">Add</button></form>
+    <button class="textbtn" data-act="bulk" data-tip="Type or paste an outline: indent to nest, A -> B to link">Quick entry: paste or type a list…</button>`;
   if(S.styleOpen)h+=`<div class="card tint"><div class="cardhead"><span class="eyebrow">Style for new concepts</span><button class="icon" data-act="newstyle" aria-label="Close">${ic('x')}</button></div>${stylePicker(S.newStyle.color,S.newStyle.shape,'new')}</div>`;
+  if(S.multi.size>1){
+    const ns=selNodes(),f=ns[0],opts=m.nodes.filter(o=>!ns.includes(o)&&!ns.some(x=>isInside(o,x)));
+    h+=`<section class="card"><div class="cardhead"><span class="eyebrow">${ns.length} concepts selected</span><button class="icon" data-act="desel" data-tip="Clear selection (Esc)" aria-label="Clear selection">${ic('x')}</button></div>
+    <div class="chips">${ns.slice(0,14).map(k=>`<span class="chip">${shapeIcon(k.shape,k.color)}${esc(clip(k.label||'Untitled',22))}</span>`).join('')}${ns.length>14?`<span class="chip">+${ns.length-14} more</span>`:''}</div>
+    ${stylePicker(f.color,f.shape,'node')}
+    <label class="fld"><span>Nest all inside</span><select class="inp" id="multiParent"><option value="" selected disabled>Choose a concept…</option><option value="__top">— Top level —</option>${opts.map(o=>`<option value="${o.id}">${esc(clip(o.label||'Untitled',40))}</option>`).join('')}</select></label>
+    <div class="row3">${ns.length===2?`<button class="btn" data-act="mlink" data-tip="Draw a link between the two">Link</button>`:''}<button class="btn" data-act="mmerge" data-tip="Combine them into one concept">Merge</button><button class="btn" data-act="mgroup" data-tip="Put them inside a new concept (Ctrl G)">Group</button></div>
+    <button class="btn danger block" data-act="mdelete">${ic('trash')}Delete ${ns.length} concepts</button></section>`;
+  }
   if(sel){
     const kids=sel._kids||[],opts=m.nodes.filter(o=>o!==sel&&!isInside(o,sel));
     h+=`<section class="card"><div class="cardhead"><span class="eyebrow">Selected concept</span><button class="icon" data-act="desel" data-tip="Close (Esc)" aria-label="Close">${ic('x')}</button></div>
@@ -1246,8 +1607,8 @@ function panelConcepts(){
   m.nodes.filter(n=>!n._p).forEach(n=>walk(n,0));
   h+=`<div class="listhead">All concepts <span class="count">${m.nodes.length}</span></div>`;
   h+=m.nodes.length?`<ul class="list">${order.map(([n,d])=>{const sub=[(n._kids||[]).length?n._kids.length+' inside':'',deg.get(n.id)?deg.get(n.id)+(deg.get(n.id)===1?' link':' links'):''].filter(Boolean).join(' · ');
-      return `<li data-act="selnode" data-id="${n.id}" class="${sel===n?'on':''}" style="padding-left:${8+d*16}px">${shapeIcon(n.shape,n.color)}<span class="t" data-lbl="${n.id}">${n.label?esc(n.label):'<i>Untitled</i>'}</span><span class="sub">${sub}</span><button class="icon" data-act="delnode" data-id="${n.id}" data-tip="Delete" aria-label="Delete ${esc(n.label)}">${ic('x')}</button></li>`;}).join('')}</ul>`
-    :`<p class="muted small">Type a concept above and press Enter. Keep typing to add several quickly.</p>`;
+      return `<li data-act="selnode" data-id="${n.id}" class="${isSelNode(n.id)?'on':''}" style="padding-left:${8+d*16}px">${shapeIcon(n.shape,n.color)}<span class="t" data-lbl="${n.id}">${n.label?esc(n.label):'<i>Untitled</i>'}</span><span class="sub">${sub}</span><button class="icon" data-act="delnode" data-id="${n.id}" data-tip="Delete" aria-label="Delete ${esc(n.label)}">${ic('x')}</button></li>`;}).join('')}</ul>`
+    :`<p class="muted small">Type a concept above and press Enter. Keep typing to add several quickly, or use Quick entry to paste a whole outline.</p>`;
   if(m.nodes.length>1)h+=`<button class="btn block" style="margin-top:14px" data-act="mode" data-v="links">Next: connect concepts →</button>`;
   return h;
 }
@@ -1278,11 +1639,13 @@ function panelCompare(){
     <button class="icon" data-act="editmap" data-i="${i}" data-tip="Open this map in the editor" aria-label="Edit">${ic('edit')}</button>
     <button class="icon" data-act="cmpremove" data-i="${i}" data-tip="Remove from comparison" aria-label="Remove">${ic('x')}</button></div>`).join('');
   if(N===1)return h+`<p class="muted small" style="margin-top:10px">Load at least one more map to compare.</p>`;
-  const fi=['all','common','diff'].indexOf(C.filter);
-  h+=`<div class="seg" style="--n:3;--i:${fi};margin-top:12px">${[['all','Merged','Every concept and link from all maps'],['common','Common','Only what appears in every map'],['diff','Differences','Only what is missing from at least one map']].map(([v,t,tip])=>`<button data-act="filter" data-v="${v}" aria-selected="${C.filter===v}" data-tip="${tip}">${t}</button>`).join('')}</div>
+  const fopts=[['all','Merged','Every concept and link from all maps'],['common','Common','Only what appears in every map'],N>2&&['major','Majority','What more than half of the maps contain'],['diff','Differences','Only what is missing from at least one map']].filter(Boolean);
+  if(!fopts.some(o=>o[0]===C.filter))C.filter='all';
+  h+=`<div class="seg" style="--n:${fopts.length};--i:${fopts.findIndex(o=>o[0]===C.filter)};margin-top:12px">${fopts.map(([v,t,tip])=>`<button data-act="filter" data-v="${v}" aria-selected="${C.filter===v}" data-tip="${tip}" style="padding:7px 4px">${t}</button>`).join('')}</div>
   <div class="legend"><span><i class="lg c"></i>in all maps</span><span><i class="lg s"></i>in some</span><span><i class="lg u"></i>in one map</span><span>ring = which maps</span></div>`;
   const cn=U.nodes.filter(n=>n.in.size===N).length,ce=U.edges.filter(e=>e.in.size===N).length;
   h+=`<div class="stats"><div class="stat" data-tip="Concepts found in every map / all distinct concepts"><b>${cn}<small style="font-size:14px;color:var(--muted)"> / ${U.nodes.length}</small></b><span>concepts in common</span></div><div class="stat" data-tip="Links found in every map / all distinct links"><b>${ce}<small style="font-size:14px;color:var(--muted)"> / ${U.edges.length}</small></b><span>links in common</span></div></div>`;
+  if(C.suggest.length)h+=`<h3 class="sec" data-tip="Concepts from different maps with nearly identical labels. Merging treats them as one concept in this comparison.">Possible matches</h3>${C.suggest.map((x,i)=>`<div class="sug"><span class="t" data-tip="${esc(x.a.label)} ≈ ${esc(x.b.label)} (${Math.round(x.sc*100)}% alike)">${esc(clip(x.a.label,22))} <span class="muted">≈</span> ${esc(clip(x.b.label,22))}</span><button class="btn" data-act="sugmerge" data-i="${i}">Merge</button><button class="icon" data-act="sugdismiss" data-i="${i}" data-tip="Not the same" aria-label="Dismiss">${ic('x')}</button></div>`).join('')}`;
   // inspector
   if(C.sel){
     const u=(C.sel.type==='node'?U.nodes:U.edges)[C.sel.i];
@@ -1333,6 +1696,14 @@ function renderHint(){
     ht=p?`Now tap another concept to link it with <b>${esc(clip(p.label||'Untitled',24))}</b>`:(S.sel?'':'Tap a concept to start a link');}
   setHint(ht);
 }
+function renderSelBar(){
+  const bar=$('#selbar'),cmp=S.mode==='compare',n=cmp?S.cmp.multi.size:S.multi.size;let h='';
+  if(n>1)h=`<b>${n} selected</b>`+(cmp?`<button data-act="cmpmergesel" data-tip="Treat these as one concept in this comparison">Merge for comparison</button>`
+    :`${n===2?'<button data-act="mlink">Link</button>':''}<button data-act="mmerge">Merge</button><button data-act="mgroup">Group</button><button data-act="mdelete">Delete</button>`)+`<button class="x" data-act="${cmp?'cmpdesel':'desel'}" aria-label="Clear selection">✕</button>`;
+  else if(S.selectMode)h=`<span>Tap concepts or drag a box to select</span><button data-act="selmode">Done</button>`;
+  bar.innerHTML=h;bar.hidden=!h;$('#hint').style.visibility=h?'hidden':'';
+  const sb=$('.zoom [data-act=selmode]');if(sb)sb.setAttribute('aria-pressed',S.selectMode);
+}
 function renderPanel(){
   const cmp=S.mode==='compare';
   $('#ptitle').textContent=cmp?'Maps':S.mode==='links'?'Links':'Concepts';
@@ -1343,7 +1714,7 @@ function renderPanel(){
   const idx=['concepts','links','compare'].indexOf(S.mode);$('#modes').style.setProperty('--i',idx);
   document.querySelectorAll('#modes button').forEach((b,i)=>b.setAttribute('aria-selected',i===idx));
   document.querySelectorAll('.cmp').forEach(e=>e.hidden=!cmp);
-  renderHint();
+  renderHint();renderSelBar();
   // empty state
   const em=$('#empty'),art=`<svg class="art" viewBox="0 0 92 70"><path d="M22 24l44-8M22 24l22 30M66 16L44 54" stroke="var(--edge)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round" fill="none"/><circle cx="22" cy="24" r="13" fill="#E4572E"/><circle cx="68" cy="16" r="10" fill="#29A0C4"/><circle cx="44" cy="54" r="12" fill="#F3A712"/></svg>`;
   if(!cmp&&!S.map.nodes.length){em.hidden=false;em.innerHTML=`<div>${art}<h2>Start your concept map</h2><p>Add concepts from the panel, or double-tap anywhere on the canvas. Then switch to <b>Links</b> to connect them.</p><button class="btn" data-act="example">Try an example</button></div>`;}
@@ -1365,7 +1736,7 @@ function softRefresh(){
 function setMode(m){
   if(m===S.mode)return;
   const cross=(m==='compare')!==(S.mode==='compare');
-  S.mode=m;S.pending=null;if(m!=='links'&&S.sel&&S.sel.type==='edge')S.sel=null;if(m==='links'&&S.sel&&S.sel.type==='node')S.sel=null;
+  S.mode=m;S.pending=null;S.selectMode=false;if(IE.active)endInline(true);if(m!=='links'&&S.sel&&S.sel.type==='edge')S.sel=null;if(m==='links'&&S.sel&&S.sel.type==='node')S.sel=null;
   refresh(cross,.3);if(cross)fitSoon();
 }
 function openSheet(){$('#panel').classList.remove('collapsed');}
@@ -1385,7 +1756,7 @@ function buildActions(){
     ?`<button class="btn primary ${a.ed?'ed':''}" data-run="${a.id}" data-tip="${a.tip}" style="margin-left:6px">${ic(a.icon)}<span class="desk">Download</span></button>`
     :`<button class="icon desk ${a.ed?'ed':''}" data-run="${a.id}" data-tip="${a.tip}" aria-label="${a.label}">${ic(a.icon)}</button>`).join('');
   $('#menuBtn').innerHTML=ic('menu');
-  $('.zoom [data-act=zin]').innerHTML=ic('plus');$('.zoom [data-act=zout]').innerHTML=ic('minus');$('.zoom [data-act=fit]').innerHTML=ic('fit');
+  $('.zoom [data-act=zin]').innerHTML=ic('plus');$('.zoom [data-act=zout]').innerHTML=ic('minus');$('.zoom [data-act=fit]').innerHTML=ic('fit');$('.zoom [data-act=selmode]').innerHTML=ic('select');
 }
 function updateActions(){
   for(const a of ACTIONS)if(a.off)document.querySelectorAll(`[data-run=${a.id}]`).forEach(b=>b.disabled=a.off());
@@ -1396,7 +1767,8 @@ function openMenu(){
   m.hidden=false;
 }
 function closeMenu(){$('#menu').hidden=true;}
-function setTheme(t){document.documentElement.dataset.theme=t;try{localStorage.setItem(STORE+'.theme',t);}catch(e){}
+function setTheme(t){const was=document.documentElement.dataset.theme;setTimeout(()=>{if(was&&was!==t&&S.mode==='compare')refresh();},0); // map colors are chosen per theme
+  document.documentElement.dataset.theme=t;try{localStorage.setItem(STORE+'.theme',t);}catch(e){}
   $('meta[name=theme-color]').content=t==='dark'?'#1D2027':'#FFFEFA';}
 
 /* =====================================================================
@@ -1409,6 +1781,8 @@ document.addEventListener('click',e=>{
   if(!e.target.closest('#menu'))closeMenu();
   const mb=e.target.closest('#modes button');if(mb){setMode(mb.dataset.mode);return;}
   if(e.target.closest('#phead')){if(isMobile())$('#panel').classList.toggle('collapsed');return;}
+  const cx=e.target.closest('[data-ctx]');if(cx){const it=ctxItems[+cx.dataset.ctx];hideCtx();if(it&&it.run)it.run();return;}
+  hideCtx();
   if(e.target.closest('.md a'))return; // links inside rendered notes just open
   const t=e.target.closest('[data-act]');if(!t)return;
   const act=t.dataset.act,id=t.dataset.id,v=t.dataset.v,C=S.cmp,cu=C.sel&&C.sel.type==='node'?C.union.nodes[C.sel.i]:null;
@@ -1419,8 +1793,17 @@ document.addEventListener('click',e=>{
     case 'mode':setMode(v);break;
     case 'example':loadIntoEditor(normalizeMap(EXAMPLE),'Loaded the example map');break;
     case 'newstyle':S.styleOpen=!S.styleOpen;renderPanel();break;
-    case 'desel':S.sel=null;S.pending=null;refresh();break;
-    case 'selnode':if(e.target.closest('[data-act=delnode]'))break;setSel({type:'node',id});refresh();$('#pbody').scrollTop=0;{const n=nodeById(id);if(n)centerOn(n);}break;
+    case 'desel':clearSel();S.selectMode=false;refresh();break;
+    case 'selmode':S.selectMode=!S.selectMode;renderSelBar();break;
+    case 'bulk':bulkDialog();break;
+    case 'mlink':{const [a,b]=selNodes(),ed=makeLink(a,b);if(ed){refresh(true);editEdgeInline(ed);}}break;
+    case 'mmerge':mergeSelected();break;
+    case 'mgroup':groupSelected();break;
+    case 'mdelete':deleteNodes(selNodes());break;
+    case 'cmpmergesel':cmpMergeSelected();break;
+    case 'sugmerge':{const x=C.suggest[+t.dataset.i];if(x)cmpAliasMerge(x.a,[x.b.base],x.a.label);}break;
+    case 'sugdismiss':{const x=C.suggest[+t.dataset.i];if(x){C.dismissed.add(x.k);suggestMatches();renderPanel();}}break;
+    case 'selnode':if(e.target.closest('[data-act=delnode]'))break;if(e.shiftKey||e.ctrlKey||e.metaKey||S.selectMode){toggleMulti(id);refresh();break;}setSel({type:'node',id});refresh();$('#pbody').scrollTop=0;{const n=nodeById(id);if(n)centerOn(n);}break;
     case 'seledge':setSel({type:'edge',id});S.pending=null;refresh();$('#pbody').scrollTop=0;break;
     case 'delnode':e.stopPropagation();deleteNode(id);break;
     case 'deledge':e.stopPropagation();deleteEdge(id);break;
@@ -1443,7 +1826,7 @@ document.addEventListener('click',e=>{
     case 'cmpsel':{const i=+t.dataset.i,type=t.dataset.type,same=C.sel&&C.sel.type===type&&C.sel.i===i;C.sel=same?null:{type,i};
       const keep=$('#pbody').scrollTop;refresh();$('#pbody').scrollTop=keep;
       if(!same){const u=(type==='node'?C.union.nodes:C.union.edges)[i];if(type==='node'){if(u._rep)centerOn(u);}else if(u.sN._rep&&u.tN._rep)centerOn({x:(u.sN._rep.x+u.tN._rep.x)/2,y:(u.sN._rep.y+u.tN._rep.y)/2});}}break;
-    case 'cmpdesel':C.sel=null;refresh();break;
+    case 'cmpdesel':C.sel=null;C.multi.clear();S.selectMode=false;refresh();break;
     case 'cmpedit':loadIntoEditor(normalizeMap(viewAsMap()),'Opened the comparison view in the editor');break;
     case 'editmap':{const m=C.maps[+t.dataset.i];loadIntoEditor(normalizeMap({name:m.name,nodes:m.nodes,edges:m.edges}),`Editing “${clip(m.name,30)}”`);}break;
     case 'cmpdl':{const m=viewAsMap();m.format='concept-map';m.version=2;downloadJSON(m,m.name);toast('View downloaded');}break;
@@ -1451,10 +1834,15 @@ document.addEventListener('click',e=>{
 });
 function applyStyle(scope,prop,v){
   if(scope==='new'){S.newStyle[prop]=v;saveLocal();renderPanel();return;}
-  const n=S.sel&&nodeById(S.sel.id);if(!n)return;
-  n[prop]=v;S.newStyle[prop]=v; // remember the last style used, so the next concept matches
+  const ns=selNodes();if(!ns.length)return;
+  ns.forEach(n=>n[prop]=v);S.newStyle[prop]=v; // remember the last style used, so the next concept matches
   commit();refresh(prop==='shape',.15);
 }
+document.addEventListener('paste',e=>{ // pasting several lines into the add box adds them all
+  if(e.target.id!=='addInput')return;const tx=(e.clipboardData||{getData:()=>''}).getData('text');
+  if(/\n/.test(tx.trim())){e.preventDefault();applyBulk(tx);}
+});
+document.addEventListener('pointerdown',e=>{if(!e.target.closest('#ctx'))hideCtx();},true);
 document.addEventListener('submit',e=>{
   if(e.target.id==='childForm'){e.preventDefault();
     const p=S.sel&&nodeById(S.sel.id),inp=$('#childInput');if(!p)return;
@@ -1469,9 +1857,10 @@ document.addEventListener('submit',e=>{
 document.addEventListener('input',e=>{
   const t=e.target;
   if(t.id==='mapName'){S.map.name=t.value;return;}
+  if(t.id==='addInput'){const q=norm(t.value);document.querySelectorAll('#pbody .list li').forEach(li=>li.hidden=!!q&&!norm(li.textContent).includes(q));return;} // typing also finds existing concepts
   if(t.dataset.color){ // native color picker fires continuously: update live, commit on change
     if(t.dataset.color==='new'){S.newStyle.color=t.value;return;}
-    const n=S.sel&&nodeById(S.sel.id);if(n){n.color=t.value;S.newStyle.color=t.value;buildEditorDisplay();draw();}return;
+    const ns=selNodes();if(ns.length){ns.forEach(n=>n.color=t.value);S.newStyle.color=t.value;buildEditorDisplay();draw();}return;
   }
   if(t.id==='nodeLabel'||t.id==='nodeNotes'){
     const n=S.sel&&nodeById(S.sel.id);if(!n)return;
@@ -1489,6 +1878,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.color){commit();renderPanel();return;}
   if(t.id==='nodeLabel'){const n=S.sel&&nodeById(S.sel.id);if(n){n.label=n.label.trim();commit();softRefresh();}return;}
   if(t.id==='nodeNotes'||t.id==='edgeNotes'){commit();return;}
+  if(t.id==='multiParent'){setParentMany(selNodes(),t.value==='__top'?null:nodeById(t.value));return;}
   if(t.id==='nodeParent'){const n=S.sel&&nodeById(S.sel.id);if(n)setParent(n,t.value?nodeById(t.value):null);return;}
   if(t.id==='edgeLabel'){const ed=S.sel&&S.map.edges.find(x=>x.id===S.sel.id);if(ed){ed.label=ed.label.trim();commit();softRefresh();}return;}
   if(t.id==='edgeDir'){const ed=S.sel&&S.map.edges.find(x=>x.id===S.sel.id);if(ed){ed.directed=t.checked;commit();refresh();}return;}
@@ -1501,15 +1891,26 @@ document.addEventListener('change',e=>{
 document.addEventListener('keydown',e=>{
   if(!$('#modal').hidden)return;
   const inField=/^(INPUT|TEXTAREA)$/.test(e.target.tagName);
-  if(e.key==='Escape'){closeMenu();if(inField)e.target.blur();else if(S.mode==='compare'){S.cmp.sel=null;refresh();}else if(S.sel||S.pending){S.sel=null;S.pending=null;refresh();}return;}
+  if(e.key==='Escape'){closeMenu();hideCtx();if(inField)e.target.blur();else if(S.mode==='compare'){S.cmp.sel=null;S.cmp.multi.clear();S.selectMode=false;refresh();}else if(S.sel||S.pending||S.multi.size||S.selectMode){clearSel();S.selectMode=false;refresh();}return;}
   if(e.key==='Enter'&&inField&&e.target.tagName==='INPUT'&&!e.target.closest('form')){e.target.blur();return;}
   if(inField)return;
   const mod=e.ctrlKey||e.metaKey;
   if(mod&&e.key.toLowerCase()==='z'&&S.mode!=='compare'){e.preventDefault();e.shiftKey?redo():undo();return;}
   if(mod&&e.key.toLowerCase()==='y'&&S.mode!=='compare'){e.preventDefault();redo();return;}
   if(mod&&e.key.toLowerCase()==='s'&&S.mode!=='compare'){e.preventDefault();downloadMap();return;}
-  if((e.key==='Delete'||e.key==='Backspace')&&S.sel&&S.mode!=='compare'){e.preventDefault();S.sel.type==='node'?deleteNode(S.sel.id):deleteEdge(S.sel.id);return;}
-  if(e.key==='?')showHelp();
+  const ed=S.mode!=='compare',one=ed&&!S.multi.size?S.sel:null,key=e.key.toLowerCase();
+  if(mod&&key==='a'){e.preventDefault();selectAll();return;}
+  if(mod&&key==='g'&&ed&&selNodes().length){e.preventDefault();groupSelected();return;}
+  if(ed&&(e.key==='Delete'||e.key==='Backspace')){
+    if(S.multi.size>1){e.preventDefault();deleteNodes(selNodes());return;}
+    if(S.sel){e.preventDefault();S.sel.type==='node'?deleteNode(S.sel.id):deleteEdge(S.sel.id);return;}
+  }
+  if(one&&(e.key==='Enter'||e.key==='F2')){e.preventDefault();
+    if(one.type==='node'){const n=nodeById(one.id);if(n)renameInline(n);}else{const x=S.map.edges.find(k=>k.id===one.id);if(x)editEdgeInline(x);}return;}
+  if(one&&one.type==='node'&&e.key==='Tab'){e.preventDefault();const n=nodeById(one.id);if(n)e.shiftKey?quickAddChild(n):quickAddLinked(n);return;}
+  if(e.key==='?'){showHelp();return;}
+  // just start typing to add a concept
+  if(S.mode==='concepts'&&!mod&&!e.altKey&&e.key.length===1&&e.key!==' '){const a=$('#addInput');if(a){openSheet();a.focus();}}
 });
 /* drag & drop files anywhere */
 let dragDepth=0;
