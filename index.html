@@ -194,6 +194,60 @@ select.inp{cursor:pointer}
 .sug .icon{width:28px;height:28px;color:var(--muted)}
 pre.syntax{background:var(--surface2);border-radius:9px;padding:10px 12px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0 0 12px;white-space:pre-wrap;color:var(--ink)}
 
+/* analysis dashboard */
+.vsw{position:absolute;top:12px;left:12px;z-index:4;box-shadow:var(--shadow);background:var(--surface)}
+.analysis{position:absolute;inset:0;overflow:auto;background:var(--canvas);padding:0 16px 28px;z-index:2;-webkit-overflow-scrolling:touch}
+.atop{position:sticky;top:0;height:58px;margin:0 -16px 6px;background:var(--canvas);z-index:1} /* keeps scrolled content clear of the Map / Analysis switch */
+.chart{display:block}
+.clab{font-size:12.5px;font-weight:700;margin:10px 0 2px}
+.ahead{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-bottom:12px}
+.ahead h2{font-family:var(--serif);font-size:21px;margin:0;font-weight:600}
+.alegend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:12.5px;color:var(--muted)}
+.alegend span{display:inline-flex;align-items:center;gap:6px}
+.agrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,330px),1fr));gap:14px;align-items:start}
+.acard{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px;min-width:0}
+.acard.wide{grid-column:1/-1}
+.acard h3{font-family:var(--serif);font-size:16px;margin:0 0 2px;font-weight:600}
+.acard .sub{font-size:12.5px;color:var(--muted);margin:0 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.tile b{font-family:var(--serif);font-size:25px;line-height:1.1;display:block}
+.tile b small{font-size:13px;color:var(--muted);font-weight:400}
+.tile span{font-size:11.5px;color:var(--muted)}
+.scroll{overflow-x:auto}
+table.dt{border-collapse:collapse;width:100%;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.dt th{font-weight:600;color:var(--muted);text-align:right;padding:5px 8px;border-bottom:1px solid var(--line);white-space:nowrap;font-size:11.5px}
+table.dt td{text-align:right;padding:6px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.dt th:first-child,table.dt td:first-child{text-align:left}
+table.dt td.l{text-align:left;white-space:normal;color:var(--muted);min-width:150px}
+table.dt tr:last-child td{border-bottom:0}
+table.hm{border-collapse:separate;border-spacing:2px;font-size:12.5px;font-variant-numeric:tabular-nums}
+table.hm th{font-weight:600;color:var(--muted);padding:2px 6px;white-space:nowrap;text-align:left;max-width:150px;overflow:hidden;text-overflow:ellipsis}
+table.hm th.c{text-align:center;padding:2px 0}
+table.hm td{width:52px;height:38px;text-align:center;border-radius:6px;font-weight:600;cursor:pointer;transition:outline-color .12s;outline:2px solid transparent;outline-offset:-1px}
+table.hm td:hover{outline-color:var(--muted)}
+table.hm td.on{outline-color:var(--ink)}
+table.hm td.self{cursor:default;color:var(--muted);font-weight:400;outline:0}
+.asel{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:8px;padding:5px 8px;max-width:100%}
+.obar{display:flex;gap:2px;height:26px;margin:4px 0 2px;border-radius:5px;overflow:hidden}
+.obar i{display:flex;align-items:center;justify-content:center;min-width:20px;font-style:normal;font-size:11.5px;font-weight:700;color:#fff}
+.obar i.b{background:var(--ink);color:var(--canvas)}
+.okey{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-bottom:10px;gap:8px}
+.mrow{display:grid;grid-template-columns:minmax(0,1fr) 84px 44px;gap:8px;align-items:center;font-size:12.5px;padding:3px 0}
+.mrow .tr{height:8px;border-radius:4px;background:var(--surface2);overflow:hidden}
+.mrow .tr i{display:block;height:100%;border-radius:4px;background:var(--accent)}
+.mrow b{text-align:right;font-variant-numeric:tabular-nums}
+.anote{font-size:12.5px;color:var(--muted);margin:8px 0 0}
+.anote b{color:var(--ink)}
+.chart text{font:11.5px var(--font);fill:var(--muted)}
+.chart text.v{fill:var(--ink);font-weight:600}
+.chart text.rl{fill:var(--ink);cursor:pointer}
+.chart text.rl:hover{text-decoration:underline}
+.chart .ax{stroke:var(--line);stroke-width:1}
+.chart .tree{stroke:var(--muted);stroke-width:1.5;fill:none}
+.chart .ring{stroke:var(--surface);stroke-width:2}
+@media (max-width:820px){.mode-compare .hint,.mode-compare .selbar{top:58px}.analysis{padding:0 10px 24px}.atop{margin:0 -10px 6px}}
+
 /* ---------- panel pieces ---------- */
 .addrow{display:flex;gap:8px;margin-bottom:12px}
 .inp,textarea{width:100%;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:9px 11px;outline:none;transition:border-color .15s,box-shadow .15s;min-width:0}
@@ -358,6 +412,8 @@ h3.sec{font-family:var(--serif);font-size:16px;margin:16px 0 4px;font-weight:600
     <svg id="svg" aria-label="Concept map canvas">
       <g id="vp"><g id="gGroups"></g><g id="gEdges"></g><path class="temp" id="temp" style="display:none"></path><g id="gNodes"></g><g class="lh" id="lh" style="display:none" data-tip="Drag to another concept to link them — or to empty space to add a linked concept"><circle r="10"/><path d="M-4.5 0h9M0-4.5v9"/></g></g>
     </svg>
+    <div class="analysis" id="analysis" hidden></div>
+    <div class="seg vsw" id="vsw" hidden style="--n:2;--i:0"><button data-act="aview" data-v="map" data-tip="The maps drawn together">Map</button><button data-act="aview" data-v="stats" data-tip="Measures, charts and statistics">Analysis</button></div>
     <div class="hint" id="hint" hidden></div>
     <div class="selbar" id="selbar" hidden></div>
     <div class="marq" id="marq" hidden></div>
@@ -877,7 +933,7 @@ svg.addEventListener('pointerdown',e=>{
   if(ne){
     const n=G.byId.get(g.id);if(!n){gest=null;return;}
     if(e.altKey&&S.mode!=='compare'){g.type='link';g.src=n;return;} // Alt-drag from any concept draws a link
-    g.node=n;
+    g.node=n;g.boxOK=mod&&n._grp; // Shift-dragging inside a group draws a selection box rather than moving the group
     // dragging one of several selected concepts moves them all; dragging a group moves everything inside it
     g.nodes=S.mode!=='compare'&&S.multi.size>1&&S.multi.has(n.id)?[...new Set(selNodes().map(x=>x._rep).filter(Boolean))]:[n];
     const leaves=new Set();g.nodes.forEach(b=>(b._grp?b._leaves:[b]).forEach(l=>leaves.add(l)));
@@ -900,7 +956,7 @@ svg.addEventListener('pointermove',e=>{
     zoomAt(mx,my,gest.k0*Math.hypot(a.x-b.x,a.y-b.y)/gest.d0);return;
   }
   const dx=e.clientX-gest.sx,dy=e.clientY-gest.sy,g=gest;
-  if(!g.moved&&Math.hypot(dx,dy)>(e.pointerType==='mouse'?4:9)){g.moved=true;clearTimeout(g.lp);if(g.type==='bg')svg.classList.add('panning');}
+  if(!g.moved&&Math.hypot(dx,dy)>(e.pointerType==='mouse'?4:9)){g.moved=true;clearTimeout(g.lp);if(g.boxOK)g.type='marq';if(g.type==='bg')svg.classList.add('panning');}
   if(!g.moved)return;
   const w=toWorld(e.clientX,e.clientY);
   if(g.type==='node'){
@@ -1125,7 +1181,8 @@ function finishLink(g,e){
   makeLink(src,n);setSel({type:'node',id:n.id});refresh(true);renameInline(n);
 }
 function finishMarquee(g){
-  const [x0,y0,x1,y1]=g.rect,hit=[...G.nodes,...G.groups].filter(b=>{const x=W/2+view.x+b.x*view.k,y=H/2+view.y+b.y*view.k;return x>=x0&&x<=x1&&y>=y0&&y<=y1;});
+  const [x0,y0,x1,y1]=g.rect,hit=[...G.nodes,...G.groups].filter(b=>{const x=W/2+view.x+b.x*view.k,y=H/2+view.y+b.y*view.k,m=b._grp?b.r*view.k:0; // a group counts only when the box encloses all of it
+    return x-m>=x0&&x+m<=x1&&y-m>=y0&&y+m<=y1;});
   if(S.mode==='compare'){hit.forEach(b=>S.cmp.multi.add(b.key));S.cmp.sel=null;refresh();return;}
   if(!S.multi.size&&S.sel&&S.sel.type==='node')S.multi.add(S.sel.id);
   S.sel=null;S.pending=null;hit.forEach(b=>S.multi.add(b.id));
@@ -1275,12 +1332,12 @@ function onBgClick(dbl){
   if(S.sel||S.pending||S.multi.size){clearSel();refresh();}
 }
 /* ----- context menu (right-click, or long-press on touch) ----- */
-let ctxItems=[];
+let ctxItems=[],ctxAt=0;
 function hideCtx(){$('#ctx').hidden=true;}
 function showCtx(x,y,items){
   const m=$('#ctx');ctxItems=items=items.filter(Boolean);
   m.innerHTML=items.map((it,i)=>it==='-'?'<hr>':`<button data-ctx="${i}"${it.danger?' class="danger"':''}>${it.icon?ic(it.icon):'<span style="width:18px;flex:none"></span>'}${esc(it.label)}${it.kbd?`<kbd>${it.kbd}</kbd>`:''}</button>`).join('');
-  m.hidden=false;const r=m.getBoundingClientRect();
+  m.hidden=false;ctxAt=performance.now();const r=m.getBoundingClientRect();
   m.style.left=clamp(x,8,innerWidth-r.width-8)+'px';m.style.top=clamp(y,8,innerHeight-r.height-8)+'px';
 }
 function openCtx(type,id,x,y,w){
@@ -1560,6 +1617,223 @@ function viewAsMap(){
 }
 
 /* =====================================================================
+   ANALYSIS — quantitative comparison of the loaded maps.
+   Everything is computed on the reconciled union (after any Merge / Split by map).
+   ===================================================================== */
+const METRICS=[
+  {k:'concept',name:'Concept overlap',desc:'Jaccard index: concepts found in both maps ÷ concepts found in either.'},
+  {k:'link',name:'Link overlap',desc:'Jaccard index over links. A link is shared when both maps connect the same two concepts.'},
+  {k:'prop',name:'Proposition agreement',desc:'Of the links both maps contain, the share that also have the same label and direction.'},
+  {k:'nest',name:'Nesting agreement',desc:'Of the concepts both maps contain, the share nested under the same parent.'},
+  {k:'nbr',name:'Neighborhood similarity',desc:'For each shared concept, the Jaccard overlap between what it is linked to in each map, averaged over shared concepts (the “closeness” index used for knowledge networks).'},
+  {k:'deg',name:'Centrality agreement',corr:1,desc:'Spearman rank correlation of how many links each shared concept has: do the maps agree on which concepts are hubs?'},
+  {k:'path',name:'Path-distance agreement',corr:1,desc:'Pearson correlation of shortest-path distances between every pair of shared concepts.'},
+  {k:'adj',name:'Link-structure correlation',corr:1,desc:'Correlation between the two link patterns over shared concepts (each pair of concepts is linked or not). Its significance is tested by QAP permutation in the pair breakdown.'},
+  {k:'ged',name:'Overall similarity',desc:'1 − edit distance ÷ its maximum. The distance counts concepts and links to add or remove, links to relabel or redirect, and concepts to re-nest.'}
+];
+const mean=a=>a.reduce((x,y)=>x+y,0)/a.length;
+const sd=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(a.reduce((x,y)=>x+(y-m)**2,0)/(a.length-1));};
+function pearson(x,y){
+  const n=x.length;if(n<3)return null;const mx=mean(x),my=mean(y);let sxy=0,sx=0,sy=0;
+  for(let i=0;i<n;i++){const a=x[i]-mx,b=y[i]-my;sxy+=a*b;sx+=a*a;sy+=b*b;}
+  return sx&&sy?sxy/Math.sqrt(sx*sy):null;
+}
+function ranks(a){ // average ranks for ties
+  const ix=a.map((v,i)=>[v,i]).sort((p,q)=>p[0]-q[0]),r=new Array(a.length);
+  for(let i=0;i<ix.length;){let j=i;while(j+1<ix.length&&ix[j+1][0]===ix[i][0])j++;for(let k=i;k<=j;k++)r[ix[k][1]]=(i+j)/2+1;i=j+1;}
+  return r;
+}
+const rng=seed=>()=>{seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};
+/* Each map as a graph over the union's concepts. */
+function mapGraph(i){
+  const U=S.cmp.union,nodes=U.nodes.filter(u=>u.in.has(i)),edges=U.edges.filter(e=>e.in.has(i)),adj=new Map(nodes.map(u=>[u,new Set()]));
+  for(const e of edges){adj.get(e.sN).add(e.tN);adj.get(e.tN).add(e.sN);}
+  return {i,nodes,edges,adj,dist:null};
+}
+function distances(g){ // all shortest paths by breadth-first search
+  if(g.dist)return g.dist;g.dist=new Map();
+  for(const s of g.nodes){const d=new Map([[s,0]]),q=[s];for(let h=0;h<q.length;h++){const u=q[h];for(const v of g.adj.get(u))if(!d.has(v)){d.set(v,d.get(u)+1);q.push(v);}}g.dist.set(s,d);}
+  return g.dist;
+}
+function mapStats(g){
+  const i=g.i,n=g.nodes.length,e=g.edges.length,deg=u=>g.adj.get(u).size,by=S.cmp.union.byKey;
+  const seen=new Set();let comps=0;
+  for(const s of g.nodes){if(seen.has(s))continue;comps++;const q=[s];seen.add(s);for(let h=0;h<q.length;h++)for(const v of g.adj.get(q[h]))if(!seen.has(v)){seen.add(v);q.push(v);}}
+  let depth=n?1:0;const parents=new Set();
+  for(const u of g.nodes){let d=1,p=u.par[i],k=0;if(p)parents.add(p);while(p&&k++<999){d++;const q=by.get(p);p=q?q.par[i]:null;}depth=Math.max(depth,d);}
+  const hubs=[...g.nodes].sort((a,b)=>deg(b)-deg(a)).filter(u=>deg(u)>0).slice(0,3);
+  return {n,e,density:n>1?e/(n*(n-1)/2):null,meanDeg:n?2*e/n:null,depth,groups:parents.size,comps,isolated:g.nodes.filter(u=>!deg(u)).length,
+    labeled:e?g.edges.filter(x=>x.src[i].label).length/e:null,notes:g.nodes.filter(u=>u.src[i].notes).length+g.edges.filter(x=>x.src[i].notes).length,
+    hubs:hubs.map(u=>`${u.label} (${deg(u)})`).join(', ')};
+}
+function pairMetrics(A,B){
+  const i=A.i,j=B.i,sn=A.nodes.filter(u=>u.in.has(j)),se=A.edges.filter(e=>e.in.has(j));
+  const un=A.nodes.length+B.nodes.length-sn.length,ue=A.edges.length+B.edges.length-se.length;
+  const sameProp=e=>{const a=e.src[i],b=e.src[j];return norm(a.label)===norm(b.label)&&a.directed===b.directed&&(!a.directed||a.from===b.from);};
+  const diffProp=se.filter(e=>!sameProp(e)),diffNest=sn.filter(u=>(u.par[i]||null)!==(u.par[j]||null));
+  const nb=[];
+  for(const u of sn){const a=A.adj.get(u),b=B.adj.get(u);if(!a.size&&!b.size)continue;let both=0;for(const x of a)if(b.has(x))both++;nb.push(both/(a.size+b.size-both));}
+  const deg=sn.length>=3?pearson(ranks(sn.map(u=>A.adj.get(u).size)),ranks(sn.map(u=>B.adj.get(u).size))):null;
+  const xa=[],xb=[],pa=[],pb=[],dA=distances(A),dB=distances(B);
+  for(let a=0;a<sn.length;a++)for(let b=a+1;b<sn.length;b++){
+    xa.push(A.adj.get(sn[a]).has(sn[b])?1:0);xb.push(B.adj.get(sn[a]).has(sn[b])?1:0);
+    pa.push(dA.get(sn[a]).get(sn[b]));pb.push(dB.get(sn[a]).get(sn[b]));}
+  const cap=v=>{const m=Math.max(0,...v.filter(x=>x!=null))+1;return v.map(x=>x==null?m:x);}; // unreachable = one step beyond the farthest reachable
+  const cost=(un-sn.length)+(ue-se.length)+diffProp.length+diffNest.length,max=A.nodes.length+B.nodes.length+A.edges.length+B.edges.length;
+  return {i,j,sn,se,diffProp,diffNest,an:A.nodes.length-sn.length,bn:B.nodes.length-sn.length,ae:A.edges.length-se.length,be:B.edges.length-se.length,cost,
+    concept:un?sn.length/un:null,link:ue?se.length/ue:null,prop:se.length?1-diffProp.length/se.length:null,nest:sn.length?1-diffNest.length/sn.length:null,
+    nbr:nb.length?mean(nb):null,deg,path:pearson(cap(pa),cap(pb)),adj:pearson(xa,xb),ged:max?1-cost/max:null};
+}
+/* QAP: is the link pattern over shared concepts more alike than chance? Shuffle which concept is which in
+   one map, many times, and see how often the shuffled overlap is at least as large as the real one. */
+function qap(A,B,sn,perms=2000){
+  const k=sn.length;if(k<4)return null;
+  const a=new Uint8Array(k*k),b=new Uint8Array(k*k);let obs=0;
+  for(let x=0;x<k;x++)for(let y=x+1;y<k;y++){a[x*k+y]=A.adj.get(sn[x]).has(sn[y])?1:0;const v=B.adj.get(sn[x]).has(sn[y])?1:0;b[x*k+y]=b[y*k+x]=v;obs+=a[x*k+y]*v;}
+  const r=rng(20261115),p=Array.from({length:k},(_,x)=>x);let ge=0;
+  for(let t=0;t<perms;t++){
+    for(let x=k-1;x>0;x--){const y=Math.floor(r()*(x+1));[p[x],p[y]]=[p[y],p[x]];}
+    let s=0;for(let x=0;x<k;x++){const px=p[x]*k;for(let y=x+1;y<k;y++)if(a[x*k+y])s+=b[px+p[y]];}
+    if(s>=obs)ge++;
+  }
+  return {p:(ge+1)/(perms+1),k,perms};
+}
+function analyze(){
+  const C=S.cmp;if(C.an&&C.an.ver===C.ver)return C.an;
+  const N=C.maps.length,gs=C.maps.map((_,i)=>mapGraph(i)),pairs=new Map();
+  for(let i=0;i<N;i++)for(let j=i+1;j<N;j++)pairs.set(i+'|'+j,pairMetrics(gs[i],gs[j]));
+  return C.an={ver:C.ver,N,gs,stats:gs.map(mapStats),pairs,qap:new Map(),pair(i,j){return pairs.get(i<j?i+'|'+j:j+'|'+i);},
+    qapFor(i,j){const k=i<j?i+'|'+j:j+'|'+i;if(!this.qap.has(k)){const pm=pairs.get(k);this.qap.set(k,pm.adj==null?null:qap(gs[pm.i],gs[pm.j],pm.sn));}return this.qap.get(k);}};
+}
+/* classical multidimensional scaling to 2-D (power iteration on the double-centred squared distances) */
+function mds2(D){
+  const n=D.length,B=D.map(r=>r.map(d=>-.5*d*d)),rm=B.map(mean),gm=mean(rm);
+  for(let i=0;i<n;i++)for(let j=0;j<n;j++)B[i][j]+=gm-rm[i]-rm[j];
+  const top=()=>{let v=Array.from({length:n},(_,i)=>Math.sin(i*1.7+1)),l=0;
+    for(let it=0;it<300;it++){const w=B.map(r=>r.reduce((s,x,j)=>s+x*v[j],0)),nn=Math.hypot(...w);if(nn<1e-12)return [0,v.map(()=>0)];l=w.reduce((s,x,j)=>s+x*v[j],0);v=w.map(x=>x/nn);}
+    return [l,v];};
+  const [l1,v1]=top();for(let i=0;i<n;i++)for(let j=0;j<n;j++)B[i][j]-=l1*v1[i]*v1[j];
+  const [l2,v2]=top(),s1=Math.sqrt(Math.max(l1,0)),s2=Math.sqrt(Math.max(l2,0));
+  return v1.map((x,i)=>[x*s1,v2[i]*s2]);
+}
+function linkage(D){ // average-linkage hierarchical clustering
+  let cl=D.map((_,i)=>({items:[i],h:0}));
+  const dd=(a,b)=>{let s=0;for(const x of a.items)for(const y of b.items)s+=D[x][y];return s/(a.items.length*b.items.length);};
+  while(cl.length>1){let bi=0,bj=1,bd=Infinity;
+    for(let i=0;i<cl.length;i++)for(let j=i+1;j<cl.length;j++){const d=dd(cl[i],cl[j]);if(d<bd){bd=d;bi=i;bj=j;}}
+    const m={items:[...cl[bi].items,...cl[bj].items],h:bd,l:cl[bi],r:cl[bj]};cl=cl.filter((_,k)=>k!==bi&&k!==bj);cl.push(m);}
+  return cl[0];
+}
+/* sequential ramp for the heatmap: one hue, receding toward the surface at zero */
+function heat(v){
+  const stops=isDark()?['#0d366b','#184f95','#256abf','#3987e5','#6da7ec','#9ec5f4']:['#e4effc','#b7d3f6','#86b6ef','#5598e7','#2a78d6','#184f95'];
+  if(v==null)return ['transparent','var(--muted)'];
+  const t=clamp(v,0,1)*(stops.length-1),i=Math.min(stops.length-2,Math.floor(t)),f=t-i,h=x=>[1,3,5].map(k=>parseInt(x.slice(k,k+2),16)),a=h(stops[i]),b=h(stops[i+1]);
+  const c=a.map((x,k)=>Math.round(x+(b[k]-x)*f)),lum=.299*c[0]+.587*c[1]+.114*c[2];
+  return [`rgb(${c.join(',')})`,lum>150?'#1F2430':'#fff'];
+}
+const fmtM=(m,v)=>v==null?'–':m.corr?(v<0?'−':'')+Math.abs(v).toFixed(2):Math.round(v*100)+'%';
+function renderAnalysis(){
+  const C=S.cmp,box=$('#analysis'),sw=$('#vsw'),N=C.maps.length,on=S.mode==='compare'&&N>1;
+  if(!on)C.view='map';
+  sw.hidden=!on;sw.style.setProperty('--i',C.view==='stats'?1:0);sw.querySelectorAll('button').forEach((b,i)=>b.setAttribute('aria-selected',(C.view==='stats')===(i===1)));
+  if(!on||C.view!=='stats'){box.hidden=true;box.innerHTML='';return;}
+  const an=analyze(),U=C.union,maps=C.maps,M=METRICS.find(m=>m.k===C.metric)||METRICS[0],val=(i,j)=>an.pair(i,j)[M.k];
+  const dot=m=>`<i class="mdot" style="--c:${m.color}"></i>`,nm=(m,n=22)=>esc(clip(m.name,n));
+  const cn=U.nodes.filter(u=>u.in.size===N).length,c1=U.nodes.filter(u=>u.in.size===1).length,ce=U.edges.filter(e=>e.in.size===N).length;
+  const vals=[...an.pairs.values()].map(p=>p[M.k]).filter(v=>v!=null),pc=(a,b)=>b?Math.round(a/b*100)+'%':'–';
+  let h=`<div class="atop"></div><div class="ahead"><h2>Analysis</h2><div class="alegend">${maps.map(m=>`<span>${dot(m)}${nm(m,30)}</span>`).join('')}</div></div>
+  <div class="tiles">
+    <div class="tile"><b>${N}</b><span>maps compared</span></div>
+    <div class="tile" data-tip="Distinct concepts across all maps, after any merging"><b>${U.nodes.length}</b><span>distinct concepts</span></div>
+    <div class="tile" data-tip="Concepts that appear in every map"><b>${cn} <small>${pc(cn,U.nodes.length)}</small></b><span>in every map</span></div>
+    <div class="tile" data-tip="Concepts that appear in exactly one map"><b>${c1} <small>${pc(c1,U.nodes.length)}</small></b><span>in one map only</span></div>
+    <div class="tile" data-tip="Links that appear in every map ÷ all distinct links"><b>${ce} <small>of ${U.edges.length}</small></b><span>links in every map</span></div>
+    <div class="tile" data-tip="${esc(M.name)}, averaged over every pair of maps"><b>${vals.length?fmtM(M,mean(vals)):'–'}${vals.length>1?` <small>± ${M.corr?sd(vals).toFixed(2):Math.round(sd(vals)*100)+'%'}</small>`:''}</b><span>mean ${esc(M.name.toLowerCase())}</span></div>
+  </div><div class="agrid">`;
+  // --- pairwise matrix
+  const [pi,pj]=C.pair&&C.pair[0]<N&&C.pair[1]<N?C.pair:[0,1];
+  h+=`<div class="acard"><h3>How alike are the maps?</h3><p class="sub">Choose a measure. Click a cell for the breakdown of that pair.</p>
+    <select class="asel" id="aMetric" aria-label="Measure">${METRICS.map(m=>`<option value="${m.k}"${m.k===M.k?' selected':''}>${m.name}</option>`).join('')}</select>
+    <p class="sub" style="margin-top:8px">${esc(M.desc)}${M.corr?' Ranges from −1 to 1; the color scale starts at 0.':''}</p>
+    <div class="scroll"><table class="hm"><tr><th></th>${maps.map(m=>`<th class="c" data-tip="${esc(m.name)}">${dot(m)}</th>`).join('')}</tr>${maps.map((m,i)=>`<tr><th data-tip="${esc(m.name)}">${dot(m)} ${nm(m,16)}</th>${maps.map((_,j)=>{
+      if(i===j)return '<td class="self">–</td>';const v=val(i,j),[bg,fg]=heat(v);
+      return `<td class="${(i===pi&&j===pj)||(i===pj&&j===pi)?'on':''}" style="background:${bg};color:${fg}" data-act="apair" data-i="${i}" data-j="${j}" data-tip="${esc(maps[i].name)} vs ${esc(maps[j].name)}: ${fmtM(M,v)}${v==null?' (not enough in common to compute)':''}">${fmtM(M,v)}</td>`;}).join('')}</tr>`).join('')}</table></div></div>`;
+  // --- pair breakdown
+  const P=an.pair(pi,pj),A=maps[P.i],B=maps[P.j],Q=an.qapFor(pi,pj),lab=u=>esc(clip(u.label,20));
+  const obar=(a,b,c)=>`<div class="obar">${a?`<i style="flex:${a};background:${A.color}" data-tip="Only in ${esc(A.name)}: ${a}">${a}</i>`:''}${b?`<i class="b" style="flex:${b}" data-tip="In both: ${b}">${b}</i>`:''}${c?`<i style="flex:${c};background:${B.color}" data-tip="Only in ${esc(B.name)}: ${c}">${c}</i>`:''}</div>
+    <div class="okey"><span>only ${nm(A,14)}</span><span>both</span><span>only ${nm(B,14)}</span></div>`;
+  h+=`<div class="acard"><h3>${dot(A)} ${nm(A)} <span class="muted">vs</span> ${dot(B)} ${nm(B)}</h3><p class="sub">Edit distance ${P.cost}: the number of single changes that would turn one map into the other.</p>
+    <div class="clab">Concepts</div>${obar(P.an,P.sn.length,P.bn)}<div class="clab">Links</div>${obar(P.ae,P.se.length,P.be)}
+    ${METRICS.map(m=>{const v=P[m.k];return `<div class="mrow" data-tip="${esc(m.desc)}"><span>${m.name}</span><span class="tr"><i style="width:${v==null?0:Math.round(clamp(v,0,1)*100)}%"></i></span><b>${fmtM(m,v)}</b></div>`;}).join('')}
+    <p class="anote">${Q?`<b>QAP test:</b> link-structure correlation r = ${fmtM({corr:1},P.adj)} over ${Q.k} shared concepts, p ${Q.p<.001?'< .001':'= '+Q.p.toFixed(3).replace(/^0/,'')} (one-sided, ${Q.perms.toLocaleString()} permutations). ${Q.p<.05?'The two maps link their shared concepts more alike than chance.':'This is not distinguishable from chance.'}`
+      :`<b>QAP test:</b> not available — it needs at least four shared concepts and some variation in how they are linked.`}</p>
+    ${P.diffProp.length?`<p class="anote"><b>Same link, different wording:</b> ${P.diffProp.slice(0,6).map(e=>`${lab(e.sN)}–${lab(e.tN)} (“${esc(clip(e.src[P.i].label||'unlabeled',16))}” / “${esc(clip(e.src[P.j].label||'unlabeled',16))}”)`).join('; ')}${P.diffProp.length>6?` and ${P.diffProp.length-6} more`:''}</p>`:''}
+    ${P.diffNest.length?`<p class="anote"><b>Nested differently:</b> ${P.diffNest.slice(0,10).map(lab).join(', ')}${P.diffNest.length>10?` and ${P.diffNest.length-10} more`:''}</p>`:''}</div>`;
+  // --- per-map statistics
+  const f2=v=>v==null?'–':v.toFixed(2);
+  h+=`<div class="acard wide"><h3>Each map on its own</h3><p class="sub">Density is links ÷ possible links. Components are separate clusters with no link between them.</p><div class="scroll"><table class="dt">
+    <tr><th>Map</th><th>Concepts</th><th>Links</th><th>Density</th><th>Links per concept</th><th>Nesting levels</th><th>Groups</th><th>Components</th><th>Unlinked</th><th>Labeled links</th><th>With notes</th><th style="text-align:left">Most connected</th></tr>
+    ${an.stats.map((st,i)=>`<tr><td>${dot(maps[i])} ${nm(maps[i],26)}</td><td>${st.n}</td><td>${st.e}</td><td>${f2(st.density)}</td><td>${f2(st.meanDeg)}</td><td>${st.depth}</td><td>${st.groups}</td><td>${st.comps}</td><td>${st.isolated}</td><td>${st.labeled==null?'–':Math.round(st.labeled*100)+'%'}</td><td>${st.notes}</td><td class="l">${esc(st.hubs)||'–'}</td></tr>`).join('')}</table></div></div>`;
+  // --- concept × map matrix
+  const degIn=(u,i)=>an.gs[i].adj.get(u).size;
+  const rows=U.nodes.map((u,ix)=>({u,ix,tot:[...u.in].reduce((s,i)=>s+degIn(u,i),0)})).sort((a,b)=>b.u.in.size-a.u.in.size||b.tot-a.tot||a.u.label.localeCompare(b.u.label));
+  const shown=C.showAll?rows:rows.slice(0,25),LW=178,CW=32,RH=22,T=20,cw=LW+N*CW+46,chh=T+shown.length*RH+6;
+  h+=`<div class="acard"><h3>Which map has which concept</h3><p class="sub">Dot size shows how many links the concept has in that map; a ring means it is present but unlinked. Click a name to find it on the map.</p>
+    <div class="scroll"><svg class="chart" width="${cw}" height="${chh}" viewBox="0 0 ${cw} ${chh}" role="img" aria-label="Concepts by map">
+    ${maps.map((m,i)=>`<circle cx="${LW+i*CW+CW/2}" cy="9" r="5" fill="${m.color}" data-tip="${esc(m.name)}"/>`).join('')}
+    ${shown.map((r,y)=>{const cy=T+y*RH+RH/2;return `<line class="ax" x1="0" x2="${cw}" y1="${T+y*RH}" y2="${T+y*RH}"/><text class="rl" x="${LW-10}" y="${cy+4}" text-anchor="end" data-act="agoto" data-i="${r.ix}">${esc(clip(r.u.label,26))}</text>${maps.map((m,i)=>{
+      const cx=LW+i*CW+CW/2;if(!r.u.in.has(i))return `<line class="ax" x1="${cx-3}" x2="${cx+3}" y1="${cy}" y2="${cy}" data-tip="${esc(m.name)}: absent"/>`;
+      const d=degIn(r.u,i);return d?`<circle cx="${cx}" cy="${cy}" r="${Math.min(10,2.5+2.3*Math.sqrt(d)).toFixed(1)}" fill="${m.color}" data-tip="${esc(m.name)}: ${d} link${d===1?'':'s'}"/>`:`<circle cx="${cx}" cy="${cy}" r="3.5" fill="none" stroke="${m.color}" stroke-width="1.6" data-tip="${esc(m.name)}: present, no links"/>`;}).join('')}<text class="v" x="${LW+N*CW+10}" y="${cy+4}">${r.u.in.size}/${N}</text>`;}).join('')}</svg></div>
+    ${rows.length>25?`<button class="textbtn" style="margin:8px 0 0" data-act="ashowall">${C.showAll?'Show the top 25':`Show all ${rows.length} concepts`}</button>`:''}</div>`;
+  // --- how widely shared
+  const hist=arr=>Array.from({length:N},(_,k)=>arr.filter(x=>x.in.size===k+1).length);
+  const bars=(vs,title)=>{const W=300,H=132,b=22,t=22,max=Math.max(1,...vs),bw=Math.min(34,(W-20)/vs.length-8),step=(W-20)/vs.length;
+    return `<svg class="chart" viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px" role="img" aria-label="${title}"><line class="ax" x1="6" x2="${W-6}" y1="${H-b}" y2="${H-b}"/>${vs.map((v,k)=>{
+      const x=10+k*step+(step-bw)/2,hh=v/max*(H-b-t),y=H-b-hh,r=Math.min(4,hh);
+      return `${v?`<path d="M${x},${H-b}V${y+r}a${r},${r} 0 0 1 ${r},${-r}h${bw-2*r}a${r},${r} 0 0 1 ${r},${r}V${H-b}Z" fill="var(--accent)" data-tip="${v} in exactly ${k+1} map${k?'s':''}"/>`:''}<text class="v" x="${x+bw/2}" y="${y-5}" text-anchor="middle">${v}</text><text x="${x+bw/2}" y="${H-6}" text-anchor="middle">${k+1}</text>`;}).join('')}</svg>`;};
+  h+=`<div class="acard"><h3>How widely shared</h3><p class="sub">How many concepts and links appear in exactly 1, 2, … ${N} maps. Weight on the right means consensus; on the left, idiosyncrasy.</p>
+    <div class="clab">Concepts, by number of maps</div>${bars(hist(U.nodes),'Concepts by number of maps')}<div class="clab">Links, by number of maps</div>${bars(hist(U.edges),'Links by number of maps')}</div>`;
+  // --- maps as points and as a tree (3+ maps)
+  if(N>2){
+    const D=maps.map((_,i)=>maps.map((_,j)=>i===j?0:1-clamp(val(i,j)??0,0,1))),pts=mds2(D),W=320,H=230;
+    const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]),span=Math.max(Math.max(...xs)-Math.min(...xs),Math.max(...ys)-Math.min(...ys),1e-6),sc=Math.min((W-150)/span,(H-60)/span);
+    const mx=(Math.max(...xs)+Math.min(...xs))/2,my=(Math.max(...ys)+Math.min(...ys))/2;
+    h+=`<div class="acard"><h3>Maps as points</h3><p class="sub">Multidimensional scaling of 1 − ${esc(M.name.toLowerCase())}. Maps drawn closer together are more alike; the axes have no meaning of their own.</p>
+      <svg class="chart" viewBox="0 0 ${W} ${H}" style="width:100%;max-width:420px" role="img" aria-label="Maps arranged by similarity">${pts.map((p,i)=>{const x=W/2-30+(p[0]-mx)*sc,y=H/2+(p[1]-my)*sc;
+        return `<circle class="ring" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="7" fill="${maps[i].color}" data-tip="${esc(maps[i].name)}"/><text class="v" x="${(x+12).toFixed(1)}" y="${(y+4).toFixed(1)}">${nm(maps[i],18)}</text>`;}).join('')}</svg></div>`;
+    const root=linkage(D),order=[],LX=124,TW=W-LX-16,top=Math.max(root.h,1e-6),X=d=>LX+d/top*TW;let out='';
+    (function walk(c){if(c.l){walk(c.l);walk(c.r);}else order.push(c.items[0]);})(root);
+    const ypos=i=>18+order.indexOf(i)*26;
+    (function place(c){if(!c.l){c.y=ypos(c.items[0]);return;}place(c.l);place(c.r);c.y=(c.l.y+c.r.y)/2;
+      out+=`<path class="tree" d="M${X(c.l.h)},${c.l.y}H${X(c.h)}V${c.r.y}H${X(c.r.h)}" data-tip="Joined at distance ${c.h.toFixed(2)}"/>`;})(root);
+    const TH=order.length*26+34;
+    h+=`<div class="acard"><h3>Which maps group together</h3><p class="sub">Average-linkage clustering on the same distances. Maps joined further left are more alike.</p>
+      <svg class="chart" viewBox="0 0 ${W} ${TH}" style="width:100%;max-width:420px" role="img" aria-label="Dendrogram of maps">${order.map(i=>`<circle cx="10" cy="${ypos(i)}" r="5" fill="${maps[i].color}"/><text class="v" x="22" y="${ypos(i)+4}">${nm(maps[i],13)}</text>`).join('')}${out}
+      <line class="ax" x1="${LX}" x2="${LX+TW}" y1="${TH-18}" y2="${TH-18}"/><text x="${LX}" y="${TH-4}">0</text><text x="${LX+TW}" y="${TH-4}" text-anchor="end">${top.toFixed(2)}</text><text x="${LX+TW/2}" y="${TH-4}" text-anchor="middle">distance</text></svg></div>`;
+    const typ=maps.map((_,i)=>{const v=maps.map((_,j)=>i===j?null:val(i,j)).filter(x=>x!=null);return v.length?mean(v):null;});
+    h+=`<div class="acard"><h3>Typical and unusual maps</h3><p class="sub">Each map’s mean ${esc(M.name.toLowerCase())} with all the others. A low value marks a map unlike the rest.</p>
+      ${maps.map((m,i)=>`<div class="mrow"><span>${dot(m)} ${nm(m,24)}</span><span class="tr"><i style="width:${typ[i]==null?0:Math.round(clamp(typ[i],0,1)*100)}%;background:${m.color}"></i></span><b>${fmtM(M,typ[i])}</b></div>`).join('')}</div>`;
+  }
+  h+=`<div class="acard wide"><h3>Export</h3><p class="sub">Download the numbers behind this page as CSV. Pairwise measures include the QAP p-value for every pair.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="acsv" data-v="maps">${ic('download')}Per-map statistics</button><button class="btn" data-act="acsv" data-v="pairs">${ic('download')}Pairwise measures</button><button class="btn" data-act="acsv" data-v="concepts">${ic('download')}Concept × map table</button></div>
+    <p class="anote">Concepts are matched by label, after any merges or splits you made in this comparison. Correlations and the QAP test use only the concepts two maps share, so they say nothing when little is shared.</p></div></div>`;
+  const keep=box.scrollTop;box.innerHTML=h;box.hidden=false;box.scrollTop=keep;
+}
+function analysisCSV(kind){
+  const C=S.cmp,an=analyze(),maps=C.maps,q=v=>{v=v==null?'':String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;},num=v=>v==null?'':+v.toFixed(4);
+  let rows;
+  if(kind==='maps')rows=[['map','concepts','links','density','links_per_concept','nesting_levels','groups','components','unlinked_concepts','labeled_links_share','items_with_notes','most_connected'],
+    ...an.stats.map((s,i)=>[maps[i].name,s.n,s.e,num(s.density),num(s.meanDeg),s.depth,s.groups,s.comps,s.isolated,num(s.labeled),s.notes,s.hubs])];
+  else if(kind==='pairs'){rows=[['map_a','map_b','shared_concepts','only_a_concepts','only_b_concepts','shared_links','only_a_links','only_b_links','edit_distance',...METRICS.map(m=>m.k==='ged'?'overall_similarity':m.name.toLowerCase().replace(/[^a-z]+/g,'_')),'qap_p','qap_permutations']];
+    for(const P of an.pairs.values()){const Q=an.qapFor(P.i,P.j);rows.push([maps[P.i].name,maps[P.j].name,P.sn.length,P.an,P.bn,P.se.length,P.ae,P.be,P.cost,...METRICS.map(m=>num(P[m.k])),Q?num(Q.p):'',Q?Q.perms:'']);}}
+  else rows=[['concept','n_maps',...maps.map(m=>m.name+' (links; blank = absent)')],...C.union.nodes.map(u=>[u.label,u.in.size,...maps.map((_,i)=>u.in.has(i)?an.gs[i].adj.get(u).size:'')])];
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([rows.map(r=>r.map(q).join(',')).join('\n')+'\n'],{type:'text/csv'}));
+  a.download='concept-map-'+({maps:'map-statistics',pairs:'pairwise-measures',concepts:'concept-table'})[kind]+'.csv';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  toast('CSV downloaded');
+}
+
+/* =====================================================================
    PANEL RENDERING
    ===================================================================== */
 function stylePicker(color,shape,scope){
@@ -1667,7 +1941,7 @@ function panelCompare(){
       </section>`;}
   }
   // similarity matrix
-  h+=`<h3 class="sec" data-tip="Jaccard similarity: shared ÷ total distinct. Top-right = concepts, bottom-left = links.">Similarity</h3><table class="sim"><tr><th></th>${maps.map(m=>`<th style="color:${m.color};font-size:15px" data-tip="${esc(m.name)}">●</th>`).join('')}</tr>${maps.map((m,i)=>`<tr><th data-tip="${esc(m.name)}"><span style="color:${m.color}">●</span> ${esc(m.name)}</th>${maps.map((_,j)=>{
+  h+=`<button class="btn block" style="margin-top:14px" data-act="aview" data-v="${C.view==='stats'?'map':'stats'}">${ic('chart')}${C.view==='stats'?'Back to the map':'Open analysis: measures, charts, statistics'}</button><h3 class="sec" data-tip="Jaccard similarity: shared ÷ total distinct. Top-right = concepts, bottom-left = links.">Similarity</h3><table class="sim"><tr><th></th>${maps.map(m=>`<th style="color:${m.color};font-size:15px" data-tip="${esc(m.name)}">●</th>`).join('')}</tr>${maps.map((m,i)=>`<tr><th data-tip="${esc(m.name)}"><span style="color:${m.color}">●</span> ${esc(m.name)}</th>${maps.map((_,j)=>{
     if(i===j)return '<td class="muted">—</td>';const v=i<j?jaccard(U.nodes,i,j):jaccard(U.edges,i,j);
     return `<td style="background:color-mix(in srgb,var(--accent) ${Math.round(v*55)+4}%,transparent)" data-tip="${i<j?'Concept':'Link'} overlap: ${esc(maps[i].name)} vs ${esc(maps[j].name)}">${Math.round(v*100)}%</td>`;}).join('')}</tr>`).join('')}</table>
     <p class="muted small" style="margin:-4px 0 6px">Upper right: concepts · lower left: links</p>`;
@@ -1714,10 +1988,10 @@ function renderPanel(){
   const idx=['concepts','links','compare'].indexOf(S.mode);$('#modes').style.setProperty('--i',idx);
   document.querySelectorAll('#modes button').forEach((b,i)=>b.setAttribute('aria-selected',i===idx));
   document.querySelectorAll('.cmp').forEach(e=>e.hidden=!cmp);
-  renderHint();renderSelBar();
+  renderHint();renderSelBar();renderAnalysis();
   // empty state
   const em=$('#empty'),art=`<svg class="art" viewBox="0 0 92 70"><path d="M22 24l44-8M22 24l22 30M66 16L44 54" stroke="var(--edge)" stroke-width="2" stroke-dasharray="3 5" stroke-linecap="round" fill="none"/><circle cx="22" cy="24" r="13" fill="#E4572E"/><circle cx="68" cy="16" r="10" fill="#29A0C4"/><circle cx="44" cy="54" r="12" fill="#F3A712"/></svg>`;
-  if(!cmp&&!S.map.nodes.length){em.hidden=false;em.innerHTML=`<div>${art}<h2>Start your concept map</h2><p>Add concepts from the panel, or double-tap anywhere on the canvas. Then switch to <b>Links</b> to connect them.</p><button class="btn" data-act="example">Try an example</button></div>`;}
+  if(!cmp&&!S.map.nodes.length){em.hidden=false;em.innerHTML=`<div>${art}<h2>Start your concept map</h2><p>Just start typing, or double-tap anywhere on the canvas. Select a concept and drag its <b>+</b> handle to link it. Have a list already? Use <b>Quick entry</b>.</p><button class="btn" data-act="example">Try an example</button></div>`;}
   else if(cmp&&!S.cmp.maps.length){em.hidden=false;em.innerHTML=`<div>${art}<h2>Compare maps</h2><p>Load two or more saved maps to see shared concepts, differences, and the map common to all of them.</p><button class="btn primary" data-act="cmpload">${ic('open')}Load maps…</button></div>`;}
   else em.hidden=true;
   updateActions();
@@ -1782,7 +2056,7 @@ document.addEventListener('click',e=>{
   const mb=e.target.closest('#modes button');if(mb){setMode(mb.dataset.mode);return;}
   if(e.target.closest('#phead')){if(isMobile())$('#panel').classList.toggle('collapsed');return;}
   const cx=e.target.closest('[data-ctx]');if(cx){const it=ctxItems[+cx.dataset.ctx];hideCtx();if(it&&it.run)it.run();return;}
-  hideCtx();
+  if(performance.now()-ctxAt>450)hideCtx(); // lifting the finger after a long-press also clicks: keep the menu it just opened
   if(e.target.closest('.md a'))return; // links inside rendered notes just open
   const t=e.target.closest('[data-act]');if(!t)return;
   const act=t.dataset.act,id=t.dataset.id,v=t.dataset.v,C=S.cmp,cu=C.sel&&C.sel.type==='node'?C.union.nodes[C.sel.i]:null;
@@ -1801,6 +2075,11 @@ document.addEventListener('click',e=>{
     case 'mgroup':groupSelected();break;
     case 'mdelete':deleteNodes(selNodes());break;
     case 'cmpmergesel':cmpMergeSelected();break;
+    case 'aview':C.view=v;refresh();if(v==='map')fitSoon();else $('#analysis').scrollTop=0;break;
+    case 'apair':C.pair=[+t.dataset.i,+t.dataset.j];renderAnalysis();break;
+    case 'ashowall':C.showAll=!C.showAll;renderAnalysis();break;
+    case 'acsv':analysisCSV(v);break;
+    case 'agoto':{const u=C.union.nodes[+t.dataset.i];C.view='map';C.filter='all';C.multi.clear();C.sel={type:'node',i:+t.dataset.i};refresh();if(u&&u._rep)setTimeout(()=>centerOn(u),60);}break;
     case 'sugmerge':{const x=C.suggest[+t.dataset.i];if(x)cmpAliasMerge(x.a,[x.b.base],x.a.label);}break;
     case 'sugdismiss':{const x=C.suggest[+t.dataset.i];if(x){C.dismissed.add(x.k);suggestMatches();renderPanel();}}break;
     case 'selnode':if(e.target.closest('[data-act=delnode]'))break;if(e.shiftKey||e.ctrlKey||e.metaKey||S.selectMode){toggleMulti(id);refresh();break;}setSel({type:'node',id});refresh();$('#pbody').scrollTop=0;{const n=nodeById(id);if(n)centerOn(n);}break;
@@ -1878,6 +2157,7 @@ document.addEventListener('change',e=>{
   if(t.dataset.color){commit();renderPanel();return;}
   if(t.id==='nodeLabel'){const n=S.sel&&nodeById(S.sel.id);if(n){n.label=n.label.trim();commit();softRefresh();}return;}
   if(t.id==='nodeNotes'||t.id==='edgeNotes'){commit();return;}
+  if(t.id==='aMetric'){S.cmp.metric=t.value;renderAnalysis();return;}
   if(t.id==='multiParent'){setParentMany(selNodes(),t.value==='__top'?null:nodeById(t.value));return;}
   if(t.id==='nodeParent'){const n=S.sel&&nodeById(S.sel.id);if(n)setParent(n,t.value?nodeById(t.value):null);return;}
   if(t.id==='edgeLabel'){const ed=S.sel&&S.map.edges.find(x=>x.id===S.sel.id);if(ed){ed.label=ed.label.trim();commit();softRefresh();}return;}
@@ -2025,8 +2305,15 @@ function showHelp(){
     <li>Switch to <b>Links</b>, click one concept, then another — they are connected.</li>
     <li><b>Click a link</b> to label it (“causes”, “is part of”…), add notes, reverse it, hide its arrow, or delete it.</li>
     <li>Go back and forth between Concepts and Links whenever you like.</li></ul>
+  <h3>Working directly on the map</h3><ul>
+    <li><b>Rename in place:</b> double-click a concept or a link (or select it and press <kbd>Enter</kbd>) and type.</li>
+    <li><b>Link by dragging:</b> select a concept and drag the round <b>+</b> handle beside it onto another concept. Drop it on empty space to create a new, linked concept. <kbd>Alt</kbd>-drag from any concept does the same.</li>
+    <li><b>Keep typing:</b> with a concept selected, <kbd>Tab</kbd> adds a linked concept and <kbd>Shift</kbd>+<kbd>Tab</kbd> adds one nested inside it, ready to name. With nothing selected, just start typing to add a concept.</li>
+    <li><b>Quick entry:</b> paste or type an outline — one concept per line, indent to nest, <code>A -> B : label</code> to link. Pasting several lines into the Add box works too.</li>
+    <li><b>Select several:</b> <kbd>Shift</kbd>-click concepts, <kbd>Shift</kbd>-drag a box around them, or turn on the dashed-square button (best on touch). Then move them together, or Link, Merge, Group, restyle, nest or delete them at once.</li>
+    <li><b>Right-click</b> (or press and hold on touch) a concept, a link or the canvas for a menu of everything you can do there.</li></ul>
   <h3>Nesting, splitting and merging</h3><ul>
-    <li><b>Nest</b> a concept inside another to any depth: select it and choose <b>Nested inside</b>, type in <b>Add a concept inside…</b>, or drag it over another concept and hold for a moment until it highlights, then let go.</li>
+    <li><b>Nest</b> a concept inside another to any depth: select it and choose <b>Nested inside</b>, type in <b>Add a concept inside…</b>, or drag it over another concept and pause until it highlights, then let go. Drag a concept out of its group and pause to move it back out.</li>
     <li>A concept that contains others is drawn as a region around them. <b>Double-click</b> it to collapse it into a single stacked node (the badge counts what is inside) and again to expand. Links to hidden concepts are drawn to the collapsed group.</li>
     <li><b>Split…</b> turns one concept into several; you choose which new concept receives each link, or keep the original as a group around them.</li>
     <li><b>Merge…</b> folds other concepts into the selected one, carrying over their links, notes and nested concepts.</li></ul>
@@ -2043,8 +2330,10 @@ function showHelp(){
     <li><b>Merged</b> shows everything, <b>Common</b> only what all maps share, <b>Differences</b> only what is missing somewhere. The eye button spotlights one map.</li>
     <li>Nesting is compared too: groups are drawn as regions, and concepts that sit inside different parents are listed under <b>Nested differently</b>.</li>
     <li>If maps use different words for the same idea, select one and choose <b>Merge…</b> to treat them as one concept. If the same word means different things, <b>Split by map</b> keeps them apart. Both only affect the comparison, not your files.</li>
+    <li><b>Possible matches</b> lists concepts whose labels are nearly identical across maps, with one-click merging. You can also Shift-click several concepts, or drag one onto another, to merge them for the comparison.</li>
+    <li><b>Analysis</b> (the switch at the top left of the map) gives the numbers: nine pairwise measures of similarity, a permutation (QAP) test of whether two maps link their shared concepts more alike than chance, per-map statistics, and charts of which concepts are shared. With three or more maps it also shows which maps cluster together. Everything can be exported as CSV.</li>
     <li>Click any concept or link to see how each map treats it, including its notes. <b>Edit view</b> or <b>Save view</b> turns what you see — such as the common map — into a map of its own.</li></ul>
-  <h3>Shortcuts</h3><ul><li><kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl/⌘ Shift Z</kbd> redo · <kbd>Ctrl/⌘ S</kbd> download · <kbd>Delete</kbd> remove selection · <kbd>Esc</kbd> deselect · <kbd>?</kbd> this help</li></ul>
+  <h3>Shortcuts</h3><ul><li><kbd>Ctrl/⌘ Z</kbd> undo · <kbd>Ctrl/⌘ Shift Z</kbd> redo · <kbd>Ctrl/⌘ S</kbd> download · <kbd>Enter</kbd> rename · <kbd>Tab</kbd> add linked · <kbd>Shift Tab</kbd> add inside · <kbd>Ctrl/⌘ A</kbd> select all · <kbd>Ctrl/⌘ G</kbd> group · <kbd>Delete</kbd> remove selection · <kbd>Esc</kbd> deselect · <kbd>?</kbd> this help</li></ul>
   <div class="foot" style="margin-top:18px"><button class="btn primary" id="helpOk">Got it</button></div>`;
   $('#modal').hidden=false;$('#helpClose').onclick=$('#helpOk').onclick=closeModal;
   const key=e=>{if(e.key==='Escape'){closeModal();document.removeEventListener('keydown',key,true);}};document.addEventListener('keydown',key,true);

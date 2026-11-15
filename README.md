@@ -14,7 +14,10 @@ A browser app for writing, editing, and comparing concept maps. It is a single H
 - **Split and merge concepts.** Split one concept into several and choose where each link goes, or fold several concepts into one.
 - **Force-directed layout.** Drag any concept or group; the map settles back into balance when you let go.
 - **Save and reopen.** Maps download as JSON files and can be opened again for editing.
+- **Edit directly on the map.** Rename in place, drag a handle to link, select several concepts at once, and right-click for a menu of actions.
+- **Enter maps quickly.** Type an outline, or keep your hands on the keyboard with Tab and Enter.
 - **Compare maps.** Load two or more maps to see what they share, where they differ, and the map common to all of them.
+- **Measure agreement.** Nine pairwise similarity measures, a permutation test, per-map statistics, charts, and CSV export.
 
 It works with a mouse or touch, on desktop and phone-sized screens, in light or dark mode.
 
@@ -34,12 +37,39 @@ Open the link above, or download `index.html` and open it in a browser. The **?*
 - Switch to **Links**, click one concept, then another.
 - Click a link to label it, add notes, reverse it, hide its arrow, or delete it.
 
+### Working directly on the map
+
+| To do this | Do this |
+| --- | --- |
+| Rename a concept or link | Double-click it, or select it and press Enter |
+| Link two concepts | Select one and drag its **+** handle onto the other (or Alt-drag from any concept) |
+| Add a linked concept | Drag the **+** handle to empty space, or press Tab with a concept selected |
+| Add a nested concept | Press Shift+Tab with a concept selected |
+| Add a concept | Start typing, or double-click the canvas |
+| Select several | Shift-click, Shift-drag a box, or turn on the dashed-square button (for touch) |
+| Act on a selection | Drag to move together; use the bar at the top to Link, Merge, Group, or Delete |
+| See every action | Right-click, or press and hold on touch |
+
+### Quick entry
+
+Click **Quick entry** under the Add box and type or paste an outline. One concept per line, indent to nest, and use an arrow to link:
+
+```
+Memory
+  Long-term memory
+    Episodic
+  Working memory
+Hippocampus -> Episodic : encodes
+Sleep -> Consolidation -> Long-term memory
+```
+
+Pasting several lines straight into the Add box does the same thing.
+
 ### Nesting, splitting, and merging
 
-- Nest a concept by choosing a parent under **Nested inside**, by typing in **Add a concept inside…**, or by dragging it over another concept and holding until the target highlights.
+- Nest a concept by choosing a parent under **Nested inside**, by typing in **Add a concept inside…**, or by dragging it over another concept and pausing until the target highlights. Drag it out of the group and pause to un-nest it.
 - Double-click a group to collapse or expand it. Links to hidden concepts are drawn to the collapsed group.
 - **Split…** and **Merge…** are in the panel for the selected concept.
-- To move a concept out of a group, set **Nested inside** to *Top level*.
 
 ### Moving around
 
@@ -58,11 +88,37 @@ Switch to **Compare** and load two or more saved maps.
 
 - **Matching.** Concepts are matched by label, ignoring capitalization and extra spaces. A link counts as shared when the same two concepts are connected, whatever its label or direction.
 - **Reading the picture.** Dark concepts are in every map, white ones in some, tinted ones in just one. The ring around each concept shows which maps contain it.
-- **Views.** *Merged* shows everything, *Common* shows only what every map shares, and *Differences* shows only what is missing from at least one map.
+- **Views.** *Merged* shows everything, *Common* shows only what every map shares, *Majority* (three or more maps) shows what more than half contain, and *Differences* shows only what is missing from at least one map.
 - **Nesting.** Groups are drawn as regions. Concepts that sit under different parents in different maps are listed under *Nested differently*.
-- **Reconciling wording.** *Merge…* treats differently worded concepts as one, and *Split by map* keeps a shared label apart. Both affect only the comparison, not the loaded files.
+- **Reconciling wording.** *Possible matches* lists concepts with nearly identical labels for one-click merging. *Merge…*, Shift-clicking several concepts, or dragging one onto another treats differently worded concepts as one. *Split by map* keeps a shared label apart. All of these affect only the comparison, not the loaded files.
 - **Naming.** A file without a name is given one as it loads, and a file whose name is already in use is given a distinguishing label.
 - **Exporting.** *Save view* and *Edit view* turn what is on screen, such as the common map, into a map of its own.
+
+### Analysis
+
+The **Map / Analysis** switch at the top left of the comparison opens a dashboard of measures. All of them are computed after any merges and splits you made.
+
+Pairwise measures, shown as a heatmap with a breakdown for any pair:
+
+| Measure | What it is |
+| --- | --- |
+| Concept overlap | Jaccard index over concepts |
+| Link overlap | Jaccard index over links |
+| Proposition agreement | Share of shared links with the same label and direction |
+| Nesting agreement | Share of shared concepts nested under the same parent |
+| Neighborhood similarity | Mean Jaccard overlap of each shared concept's neighbors |
+| Centrality agreement | Spearman correlation of link counts over shared concepts |
+| Path-distance agreement | Pearson correlation of shortest-path distances between shared concepts |
+| Link-structure correlation | Correlation of the two link patterns over shared concepts |
+| Overall similarity | 1 − edit distance ÷ its maximum |
+
+- **Significance.** For any pair, a QAP permutation test (2,000 permutations, fixed seed, one-sided) asks whether the maps link their shared concepts more alike than chance. It needs at least four shared concepts.
+- **Per-map statistics.** Concepts, links, density, links per concept, nesting levels, groups, components, unlinked concepts, labeled links, and the most connected concepts.
+- **Charts.** A concept × map matrix sized by link count, and how many concepts and links appear in exactly 1, 2, … N maps.
+- **Three or more maps.** A multidimensional-scaling layout of the maps, an average-linkage dendrogram, and each map's mean similarity to the others.
+- **Export.** Per-map statistics, pairwise measures (with QAP p-values), and the concept × map table download as CSV.
+
+The correlations and the QAP test use only the concepts two maps share, so they are undefined or uninformative when little is shared.
 
 ## File format
 
@@ -102,7 +158,7 @@ Everything is in `index.html`: markup, styles, and script. There is nothing to i
 
 The site is served by GitHub Pages from the root of the `main` branch.
 
-The app has been exercised with Playwright in Chromium at desktop size and with touch emulation at phone size. It has not been tested on physical iOS or Android devices, or in Firefox or Safari.
+The app has been exercised with Playwright in Chromium at desktop size and with touch emulation at phone size. The analysis numbers were checked against an independent implementation using networkx and scipy. It has not been tested on physical iOS or Android devices, or in Firefox or Safari.
 
 ## License
 
