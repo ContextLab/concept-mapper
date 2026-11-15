@@ -2,7 +2,7 @@
 
 A browser app for writing, editing, and comparing concept maps. It is a single HTML file with no dependencies and no build step.
 
-**Use it here: <https://contextlab.github.io/concept-mapper/>**
+**Use it here: <https://context-lab.com/concept-mapper/>**
 
 ![Concept Mapper showing an example map of the water cycle](docs/screenshot.png)
 
